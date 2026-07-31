@@ -314,6 +314,11 @@ Bookmark manually and confirm both appear in the correct Notion database after r
   keep the configured workspace (initially `~/Data/work/truetest-pm-agenthub`) first and selected
   by default, deduplicate and ignore unavailable folders, and provide a folder chooser for valid
   projects that have no existing Codex conversation. Project choices MUST NOT be hard-coded.
+- **FR-057**: Clasp MUST run as a regular macOS application while retaining its menu-bar item.
+  Its icon MUST appear in the Dock and the application MUST be reachable through the standard
+  Command-Tab app switcher. Opening the main window or Settings MUST activate Clasp, move the
+  window to the active Space, and raise it above other application windows. The Capture panel
+  MUST remain a floating all-Spaces utility while capture is active.
 
 ### Key Entities
 

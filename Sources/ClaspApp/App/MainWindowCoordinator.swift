@@ -13,6 +13,7 @@ final class MainWindowCoordinator: NSObject, NSWindowDelegate {
     func show() {
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
         Task { await model.loadLibrary() }
     }
 
@@ -27,6 +28,7 @@ final class MainWindowCoordinator: NSObject, NSWindowDelegate {
         window.contentView = NSHostingView(rootView: LibraryView(model: model))
         window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 900, height: 540)
+        window.collectionBehavior = [.moveToActiveSpace]
         window.setFrameAutosaveName("ClaspMainWindow")
         window.center()
         return window

@@ -15,6 +15,7 @@ final class SettingsWindowCoordinator: NSObject, NSWindowDelegate {
         NSApp.activate(ignoringOtherApps: true)
         window.center()
         window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
     }
 
     private func makeWindow() -> NSWindow {
@@ -28,6 +29,7 @@ final class SettingsWindowCoordinator: NSObject, NSWindowDelegate {
         window.contentView = NSHostingView(rootView: SettingsView(model: model))
         window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 620, height: 680)
+        window.collectionBehavior = [.moveToActiveSpace]
         window.setFrameAutosaveName("ClaspSettingsWindow")
         return window
     }

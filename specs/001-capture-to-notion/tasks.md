@@ -451,4 +451,12 @@ Environment-limited release checks:
   preserve `thread/start.cwd` routing
 - [x] T114 Add a per-task project picker and fallback folder chooser to Ask Codex, defaulting to
   the configured `truetest-pm-agenthub` project
-- [ ] T115 Rebuild, package, and visually verify dynamic and manually chosen project paths
+- [x] T115 Rebuild, package, and visually verify dynamic and manually chosen project paths
+
+## Phase 31: Standard macOS application presence
+
+- [x] T116 Replace the accessory/UI-element lifecycle with a regular activation policy while
+  preserving the menu-bar entry per FR-057
+- [x] T117 Raise main and Settings windows on the active Space and retain the floating capture
+  panel behavior
+- [x] T118 Rebuild, package, and verify Dock, Command-Tab, reopen, and frontmost-window behavior

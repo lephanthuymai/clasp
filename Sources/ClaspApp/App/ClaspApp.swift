@@ -54,7 +54,9 @@ final class ClaspAppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         instanceLock = lock
-        NSApp.setActivationPolicy(.accessory)
+        // Clasp has a menu-bar entry, but it is also a full windowed app. A regular
+        // activation policy keeps it visible in both the Dock and the macOS app switcher.
+        NSApp.setActivationPolicy(.regular)
         logger.info("Clasp started")
         hotKeyManager.onPressed = { [weak self] in
             DispatchQueue.main.async {
