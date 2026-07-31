@@ -520,3 +520,11 @@ Environment-limited release checks:
 - [x] T139 Name the companion Mochi and add spoken inhale, exhale, and completion cues with an
   accessible audio toggle and correct pause, reset, Focus, and dismissal behavior per FR-065
 - [x] T140 Rebuild, test, package, and visually verify the Mochi voice-guided Break in Medium mode
+
+## Phase 40: Relaxing break audio
+
+- [x] T141 Soften and slow Mochi's spoken guidance with deliberate “Breathe … in” and
+  “Breathe … out” pauses per FR-066
+- [x] T142 Add a low-volume generated ambient music bed controlled by the existing audio toggle
+  and break lifecycle per FR-066
+- [x] T143 Rebuild, test, package, and verify the refined break audio controls in Medium mode

@@ -350,6 +350,9 @@ Bookmark manually and confirm both appear in the correct Notion database after r
   white-and-brown/black tabby cat reference without storing the reference photo in the repository.
   While a Break runs, Clasp MUST speak the inhale and exhale cues, offer an accessible mute control,
   stop speaking when paused, reset, hidden, or dismissed, and announce completion when audio is on.
+- **FR-066**: Mochi's spoken guidance MUST use a quiet, slow, relaxing voice with deliberate pauses
+  in “Breathe … in” and “Breathe … out.” An unobtrusive ambient music bed MUST play during an active
+  Break, share the audio toggle, and stop on pause, reset, Focus, completion, mute, or dismissal.
 
 ### Key Entities
 

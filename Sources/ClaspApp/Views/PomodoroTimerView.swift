@@ -4,19 +4,83 @@ import Combine
 import SwiftUI
 
 @MainActor
-private final class BreathingVoiceGuide: ObservableObject {
+private final class BreakAudioGuide: ObservableObject {
     private let synthesizer = AVSpeechSynthesizer()
+    private let audioEngine = AVAudioEngine()
+    private let ambiencePlayer = AVAudioPlayerNode()
+    private var ambienceBuffer: AVAudioPCMBuffer?
+
+    init() {
+        audioEngine.attach(ambiencePlayer)
+        let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 2)!
+        audioEngine.connect(ambiencePlayer, to: audioEngine.mainMixerNode, format: format)
+        ambienceBuffer = Self.makeAmbientBuffer(format: format)
+        ambiencePlayer.volume = 0.075
+    }
 
     func speak(_ instruction: String) {
         synthesizer.stopSpeaking(at: .immediate)
         let utterance = AVSpeechUtterance(string: instruction)
-        utterance.rate = 0.42
-        utterance.pitchMultiplier = 1.08
+        utterance.voice = AVSpeechSynthesisVoice(language: Locale.current.identifier)
+            ?? AVSpeechSynthesisVoice(language: "en-US")
+        utterance.rate = 0.34
+        utterance.pitchMultiplier = 0.92
+        utterance.volume = 0.48
+        utterance.preUtteranceDelay = 0.15
+        utterance.postUtteranceDelay = 0.65
         synthesizer.speak(utterance)
     }
 
-    func stop() {
+    func startAmbience() {
+        guard !ambiencePlayer.isPlaying, let ambienceBuffer else { return }
+        ambiencePlayer.scheduleBuffer(ambienceBuffer, at: nil, options: .loops)
+        do {
+            audioEngine.prepare()
+            try audioEngine.start()
+            ambiencePlayer.play()
+        } catch {
+            audioEngine.stop()
+        }
+    }
+
+    func stopAmbience() {
+        ambiencePlayer.stop()
+        audioEngine.stop()
+    }
+
+    func stopAll() {
         synthesizer.stopSpeaking(at: .immediate)
+        stopAmbience()
+    }
+
+    private static func makeAmbientBuffer(format: AVAudioFormat) -> AVAudioPCMBuffer? {
+        let duration = 12.0
+        let frameCount = AVAudioFrameCount(format.sampleRate * duration)
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount),
+              let channels = buffer.floatChannelData else {
+            return nil
+        }
+        buffer.frameLength = frameCount
+
+        let frequencies = [130.81, 164.81, 196.00, 246.94]
+        let fadeFrames = Int(format.sampleRate * 0.8)
+
+        for frame in 0 ..< Int(frameCount) {
+            let time = Double(frame) / format.sampleRate
+            let slowPulse = 0.78 + (0.22 * sin(2 * .pi * time / 8.0))
+            let edgeFade = min(1.0, Double(min(frame, Int(frameCount) - frame - 1)) / Double(fadeFrames))
+
+            for channel in 0 ..< Int(format.channelCount) {
+                let stereoOffset = channel == 0 ? 0.0 : 0.035
+                let chord = frequencies.enumerated().reduce(0.0) { value, note in
+                    let weight = 1.0 / Double(note.offset + 2)
+                    return value + (sin(2 * .pi * note.element * time + stereoOffset) * weight)
+                }
+                channels[channel][frame] = Float(chord * 0.12 * slowPulse * edgeFade)
+            }
+        }
+
+        return buffer
     }
 }
 
@@ -47,7 +111,7 @@ struct PomodoroTimerView: View {
     @State private var isRunning = false
     @State private var catIsInhaling = false
     @State private var audioInstructionsEnabled = true
-    @StateObject private var voiceGuide = BreathingVoiceGuide()
+    @StateObject private var audioGuide = BreakAudioGuide()
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var timeText: String {
@@ -70,17 +134,15 @@ struct PomodoroTimerView: View {
         if remainingSeconds == 0 { return "Nice work — your break with Mochi is complete" }
         if !isRunning { return "Breathing paused" }
         let elapsed = mode.duration - remainingSeconds
-        return elapsed % 8 < 4 ? "Breathe in slowly" : "Breathe out slowly"
+        return elapsed % 8 < 4 ? "Breathe … in" : "Breathe … out"
     }
 
     private var spokenBreathingCue: String? {
         switch breathingCue {
-        case "Breathe in slowly":
-            "Breathe in slowly with Mochi."
-        case "Breathe out slowly":
-            "Breathe out slowly with Mochi."
-        case "Nice work — your break with Mochi is complete":
-            "Nice work. Your break with Mochi is complete."
+        case "Breathe … in":
+            "Breathe... in."
+        case "Breathe … out":
+            "Breathe... out."
         default:
             nil
         }
@@ -184,11 +246,11 @@ struct PomodoroTimerView: View {
                             .buttonStyle(.plain)
                             .foregroundStyle(audioInstructionsEnabled ? ClaspBrand.accent : .secondary)
                             .help(audioInstructionsEnabled
-                                ? "Mute Mochi's breathing instructions"
-                                : "Play Mochi's breathing instructions")
+                                ? "Mute Mochi's voice and background music"
+                                : "Play Mochi's voice and background music")
                             .accessibilityLabel(audioInstructionsEnabled
-                                ? "Mute breathing instructions"
-                                : "Enable breathing instructions")
+                                ? "Mute break audio"
+                                : "Enable break audio")
                         }
                         Text(breathingCue)
                             .font(.callout.weight(.medium))
@@ -217,12 +279,19 @@ struct PomodoroTimerView: View {
         .onChange(of: mode) { _, newMode in
             isRunning = false
             remainingSeconds = newMode.duration
-            voiceGuide.stop()
+            audioGuide.stopAll()
         }
         .onChange(of: isRunning) { _, running in
             guard running, mode == .shortBreak else {
                 catIsInhaling = false
+                audioGuide.stopAll()
+                if remainingSeconds == 0, audioInstructionsEnabled {
+                    audioGuide.speak("Nice work. Your break with Mochi is complete.")
+                }
                 return
+            }
+            if audioInstructionsEnabled {
+                audioGuide.startAmbience()
             }
             catIsInhaling = false
             withAnimation(.easeInOut(duration: 4).repeatForever(autoreverses: true)) {
@@ -234,19 +303,20 @@ struct PomodoroTimerView: View {
                   breakHasStarted,
                   audioInstructionsEnabled,
                   let instruction = spokenBreathingCue else {
-                if !isRunning {
-                    voiceGuide.stop()
+                if !isRunning, remainingSeconds != 0 {
+                    audioGuide.stopAll()
                 }
                 return
             }
-            voiceGuide.speak(instruction)
+            audioGuide.speak(instruction)
         }
         .onChange(of: audioInstructionsEnabled) { _, enabled in
             guard enabled, isRunning, let instruction = spokenBreathingCue else {
-                voiceGuide.stop()
+                audioGuide.stopAll()
                 return
             }
-            voiceGuide.speak(instruction)
+            audioGuide.startAmbience()
+            audioGuide.speak(instruction)
         }
         .onReceive(timer) { _ in
             guard isRunning else { return }
@@ -259,7 +329,7 @@ struct PomodoroTimerView: View {
             }
         }
         .onDisappear {
-            voiceGuide.stop()
+            audioGuide.stopAll()
         }
     }
 }
