@@ -278,7 +278,7 @@ final class AppModel: ObservableObject {
                 instruction: instruction,
                 workspacePath: workspacePath
             )
-            statusMessage = "Codex is working on \(item.taskID). It will open when ready."
+            statusMessage = "Codex conversation created for \(item.taskID)."
             return true
         } catch {
             try? await applyTaskProgress(pageID: item.id, progress: .failed)

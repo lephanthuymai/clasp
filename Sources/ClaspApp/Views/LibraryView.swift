@@ -472,26 +472,14 @@ struct LibraryView: View {
     private func askCodexButton(for item: NotionListItem) -> some View {
         if let threadID = model.codexThreadID(for: item),
            let destination = URL(string: "codex://threads/\(threadID)") {
-            if item.progress == .working {
-                HStack(spacing: 6) {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text("Working…")
-                        .lineLimit(1)
-                }
-                .foregroundStyle(.secondary)
-                .help("Codex is working on \(item.taskID)")
-                .accessibilityLabel("Codex is working on \(displayTitle(for: item))")
-            } else {
-                Link(destination: destination) {
-                    Label("Open Conversation", systemImage: "bubble.left.and.bubble.right")
-                        .lineLimit(1)
-                }
-                .help("Open \(item.taskID) in Codex")
-                .accessibilityLabel(
-                    "Open Codex conversation for \(displayTitle(for: item))"
-                )
+            Link(destination: destination) {
+                Label("Open Conversation", systemImage: "bubble.left.and.bubble.right")
+                    .lineLimit(1)
             }
+            .help("Open \(item.taskID) in Codex")
+            .accessibilityLabel(
+                "Open Codex conversation for \(displayTitle(for: item))"
+            )
         } else if model.askingCodexTaskIDs.contains(item.id) {
             ProgressView()
                 .controlSize(.small)

@@ -268,7 +268,8 @@ Bookmark manually and confirm both appear in the correct Notion database after r
   automatically to compatible existing Tasks data sources.
 - **FR-044**: Every Task row MUST display its current Progress value from Notion. A Task without
   a saved Codex thread MUST provide an explicit Ask Codex button; after conversation creation
-  succeeds, Clasp MUST replace that button with a persistent link to the created conversation.
+  succeeds, Clasp MUST immediately replace that button with a persistent link to the created
+  conversation, including while Progress remains `Working`.
 - **FR-045**: Ask Codex MUST present the Task context and an optional user instruction before
   creating or starting any Codex conversation.
 - **FR-046**: Clasp MUST derive a stable, human-readable Task ID from the Notion page ID and set
@@ -281,10 +282,11 @@ Bookmark manually and confirm both appear in the correct Notion database after r
   update the visible row only after Notion accepts each Progress change and MUST NOT alter the
   independent `Done` checkbox as part of Codex Progress handling.
 - **FR-048**: Clasp MUST keep a newly created Codex conversation owned by its app-server worker
-  while the turn is active and MUST NOT open its desktop route during that period. The Task row
-  MUST show an explicit non-clickable Working state. After the turn completes, fails, or requires
-  user interaction, Clasp MUST release the worker and open the persisted conversation exactly
-  once so Codex displays the available agent output rather than a stale prompt-only shell.
+  while the turn is active and MUST NOT automatically open its desktop route during that period.
+  The Task row MUST expose its persistent conversation link as soon as the thread ID is available.
+  After the turn completes, fails, or requires user interaction, Clasp MUST release the worker and
+  open the persisted conversation exactly once so Codex displays the available agent output
+  rather than a stale prompt-only shell.
 - **FR-049**: Ask Codex MUST create each conversation in a user-configurable local workspace
   folder. The initial default MUST come from the local ignored `.env`, and an unavailable
   configured folder MUST produce an actionable error without silently using another workspace.
