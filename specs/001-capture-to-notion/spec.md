@@ -326,6 +326,9 @@ Bookmark manually and confirm both appear in the correct Notion database after r
   access from the menu bar. Selecting Medium or Maximum MUST restore regular-app presence and
   immediately show the corresponding window. The menu-bar menu MUST NOT include a Recent
   Captures item. This mode-specific behavior supersedes FR-057's always-regular requirement.
+- **FR-059**: Whenever the main Clasp window is explicitly visible in Medium or Maximum mode,
+  it MUST remain above ordinary application windows, including when another application becomes
+  active. The window MUST retain normal close, minimize, move, resize, and mode behavior.
 
 ### Key Entities
 

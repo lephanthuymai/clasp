@@ -468,3 +468,9 @@ Environment-limited release checks:
 - [x] T120 Apply mode-specific activation policy and compact or maximized main-window geometry
 - [x] T121 Add the mode selector and remove Recent Captures from the menu-bar menu
 - [x] T122 Rebuild, package, and visually verify all three presentation modes
+
+## Phase 33: Always-on-top main window
+
+- [x] T123 Promote the visible main window to the macOS floating level while preserving normal
+  window controls and presentation-mode behavior per FR-059
+- [x] T124 Rebuild, package, and verify Clasp remains visible above another active application

@@ -65,8 +65,9 @@ final class MainWindowCoordinator: NSObject, NSWindowDelegate {
         window.title = "Clasp"
         window.contentView = NSHostingView(rootView: LibraryView(model: model))
         window.isReleasedWhenClosed = false
+        window.level = .floating
         window.minSize = NSSize(width: 420, height: 520)
-        window.collectionBehavior = [.moveToActiveSpace]
+        window.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
         window.center()
         return window
     }
