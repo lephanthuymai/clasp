@@ -16,6 +16,8 @@ immediately.
 
 ### Task Management
 
+![Task management in Clasp](docs/images/features/task-management.jpg)
+
 - Capture selected text as a Task or create one manually from the main window.
 - Track Name, Source, Due Date, Priority, Notes, Progress, Created Date, and Done in Notion.
 - Edit Priority and Due Date directly in Clasp.
@@ -26,6 +28,8 @@ immediately.
 
 ### Bookmark Management
 
+![Bookmark management in Clasp](docs/images/features/bookmark-management.jpg)
+
 - Capture selected text as a Bookmark or create one manually from the main window.
 - Track Name, Source, Created Date, and Done in a dedicated Notion database.
 - Open source links and the corresponding Notion page directly from Clasp.
@@ -35,12 +39,16 @@ immediately.
 
 ### Pomodoro Timer
 
+![Mochi accompanying a Pomodoro break in Clasp](docs/images/features/pomodoro-timer.jpg)
+
 - Run a 25-minute Focus session or a 5-minute Break from above the Tasks and Bookmarks tabs.
 - Start, pause, resume, and reset the timer while viewing its remaining time and progress.
 - Meet Mochi, the animated break companion, during Break sessions.
 - Play an original relaxing ambient soundscape during a Break, with an accessible audio toggle.
 
 ### Integrations
+
+![Notion synchronization and Codex task controls in Clasp](docs/images/features/integrations.jpg)
 
 #### Notion
 
