@@ -14,6 +14,25 @@ to capture selected text and source context, with an explicit temporary Copy fal
 such as Slack that do not expose their selection. The previous clipboard contents are restored
 immediately.
 
+### Capture from any app
+
+1. Select text in the app where you are working.
+2. Press Clasp's configurable global shortcut—for example, `⌥⌘C`
+   (Option–Command–C).
+3. Clasp opens the Create Task/Bookmark dialog with the selected text and detected source.
+4. Choose Task or Bookmark, review the details, and save it to Notion.
+
+Clasp records the most useful source for the selected content:
+
+| Selected from | Source saved by Clasp |
+|---|---|
+| Gmail | Link to the email |
+| Slack | Permalink to the exact Slack message |
+| A local file | File path |
+| A webpage | Page URL |
+
+The Source remains editable when an application cannot expose its exact location.
+
 ### Task Management
 
 ![Task management in Clasp](docs/images/features/task-management.jpg)
