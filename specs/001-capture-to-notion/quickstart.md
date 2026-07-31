@@ -39,8 +39,10 @@ open dist/Clasp.app
 4. Use Refresh to retrieve current remote values.
 5. Press `Command-N` in either tab, complete the type-specific form, and create the entry.
 6. Confirm the entry appears in the matching Notion database and in Clasp after refresh.
-6. Grant Accessibility access after reading the explanation.
-7. Choose and apply a global shortcut.
+7. Choose Mini, Medium, and Maximum from the menu-bar **Window Mode** menu and confirm their
+   menu-only, compact-window, and full-size-window behavior.
+8. Grant Accessibility access after reading the explanation.
+9. Choose and apply a global shortcut.
 
 ## Capture routing
 

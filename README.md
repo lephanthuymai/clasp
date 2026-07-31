@@ -92,8 +92,9 @@ Create an ad-hoc-signed local application bundle:
 open dist/Clasp.app
 ```
 
-On the first launch, Clasp opens its setup window. After setup, it remains in the menu bar;
-opening the app again brings the main Tasks and Bookmarks window forward. Use **Open Clasp** from
+On the first launch, Clasp opens its setup window. After setup, it remains in the menu bar and
+opens in **Medium** mode by default. Use the menu-bar **Window Mode** menu to switch among Mini
+(menu bar only), Medium (compact window), and Maximum (full-size window). Use **Open Clasp** from
 the menu bar at any time, refresh to load the latest Notion entries, or press `⌘N` to create an
 entry in the selected tab.
 

@@ -4,6 +4,7 @@ import Foundation
 
 @MainActor
 final class AppModel: ObservableObject {
+    @Published private(set) var presentationMode: ClaspPresentationMode
     @Published private(set) var captures: [Capture] = []
     @Published private(set) var destinations: DestinationSet?
     @Published private(set) var notionTasks: [NotionListItem] = []
@@ -52,6 +53,7 @@ final class AppModel: ObservableObject {
         self.libraryService = libraryService
         self.deliveryCoordinator = deliveryCoordinator
         self.hotKeyManager = hotKeyManager
+        self.presentationMode = ClaspPresentationMode.saved()
         self.shortcut = hotKeyManager.savedShortcut()
         let savedWorkspacePath = Self.savedCodexWorkspacePath()
         self.codexWorkspacePath = savedWorkspacePath
@@ -59,6 +61,11 @@ final class AppModel: ObservableObject {
             defaultPath: savedWorkspacePath,
             discoveredPaths: []
         )
+    }
+
+    func setPresentationMode(_ mode: ClaspPresentationMode) {
+        presentationMode = mode
+        mode.save()
     }
 
     func load() async {

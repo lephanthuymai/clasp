@@ -460,3 +460,11 @@ Environment-limited release checks:
 - [x] T117 Raise main and Settings windows on the active Space and retain the floating capture
   panel behavior
 - [x] T118 Rebuild, package, and verify Dock, Command-Tab, reopen, and frontmost-window behavior
+
+## Phase 32: Configurable presentation modes
+
+- [x] T119 Add persistent Mini, Medium, and Maximum presentation modes with Medium as the
+  first-run default per FR-058
+- [x] T120 Apply mode-specific activation policy and compact or maximized main-window geometry
+- [x] T121 Add the mode selector and remove Recent Captures from the menu-bar menu
+- [x] T122 Rebuild, package, and visually verify all three presentation modes

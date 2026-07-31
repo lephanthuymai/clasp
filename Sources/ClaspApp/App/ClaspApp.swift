@@ -54,9 +54,7 @@ final class ClaspAppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         instanceLock = lock
-        // Clasp has a menu-bar entry, but it is also a full windowed app. A regular
-        // activation policy keeps it visible in both the Dock and the macOS app switcher.
-        NSApp.setActivationPolicy(.regular)
+        setActivationPolicy(for: appModel.presentationMode)
         logger.info("Clasp started")
         hotKeyManager.onPressed = { [weak self] in
             DispatchQueue.main.async {
@@ -70,7 +68,7 @@ final class ClaspAppDelegate: NSObject, NSApplicationDelegate {
             await appModel.load()
             if appModel.destinations == nil {
                 showSettings()
-            } else {
+            } else if appModel.presentationMode != .mini {
                 showMain()
             }
         }
@@ -88,6 +86,7 @@ final class ClaspAppDelegate: NSObject, NSApplicationDelegate {
         _ sender: NSApplication,
         hasVisibleWindows flag: Bool
     ) -> Bool {
+        guard appModel.presentationMode != .mini else { return true }
         if appModel.destinations == nil {
             showSettings()
         } else {
@@ -113,7 +112,22 @@ final class ClaspAppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func showMain() {
-        mainWindow.show()
+        mainWindow.show(mode: appModel.presentationMode == .maximum ? .maximum : .medium)
+    }
+
+    func applyPresentationMode(_ mode: ClaspPresentationMode) {
+        appModel.setPresentationMode(mode)
+        setActivationPolicy(for: mode)
+        switch mode {
+        case .mini:
+            mainWindow.hide()
+        case .medium, .maximum:
+            mainWindow.show(mode: mode)
+        }
+    }
+
+    private func setActivationPolicy(for mode: ClaspPresentationMode) {
+        NSApp.setActivationPolicy(mode == .mini ? .accessory : .regular)
     }
 }
 
@@ -153,6 +167,7 @@ struct ClaspApplication: App {
                 model: appDelegate.appModel,
                 onCapture: appDelegate.beginCapture,
                 onOpenMain: appDelegate.showMain,
+                onPresentationMode: appDelegate.applyPresentationMode,
                 onSettings: appDelegate.showSettings
             )
         } label: {
@@ -183,8 +198,8 @@ private struct ClaspMenuView: View {
     @ObservedObject var model: AppModel
     let onCapture: () -> Void
     let onOpenMain: () -> Void
+    let onPresentationMode: (ClaspPresentationMode) -> Void
     let onSettings: () -> Void
-    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         Button("Capture Selection") {
@@ -197,8 +212,21 @@ private struct ClaspMenuView: View {
         }
         .keyboardShortcut("o")
 
-        Button("Recent Captures") {
-            openWindow(id: "recent-captures")
+        Menu("Window Mode") {
+            ForEach(ClaspPresentationMode.allCases) { mode in
+                Button {
+                    onPresentationMode(mode)
+                } label: {
+                    Label {
+                        VStack(alignment: .leading) {
+                            Text(mode.title)
+                            Text(mode.helpText)
+                        }
+                    } icon: {
+                        Image(systemName: model.presentationMode == mode ? "checkmark.circle.fill" : "circle")
+                    }
+                }
+            }
         }
 
         let pendingCount = model.captures.filter {

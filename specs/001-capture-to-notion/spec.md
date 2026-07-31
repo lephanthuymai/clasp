@@ -319,6 +319,13 @@ Bookmark manually and confirm both appear in the correct Notion database after r
   Command-Tab app switcher. Opening the main window or Settings MUST activate Clasp, move the
   window to the active Space, and raise it above other application windows. The Capture panel
   MUST remain a floating all-Spaces utility while capture is active.
+- **FR-058**: Clasp MUST provide persistent Mini, Medium, and Maximum presentation modes from
+  its menu-bar menu. Medium MUST be the default and use a compact task-and-bookmark window;
+  Maximum MUST expand that window to the usable screen; and Mini MUST hide the main window,
+  Dock icon, and Command-Tab presence while retaining capture, Settings, and explicit Open Clasp
+  access from the menu bar. Selecting Medium or Maximum MUST restore regular-app presence and
+  immediately show the corresponding window. The menu-bar menu MUST NOT include a Recent
+  Captures item. This mode-specific behavior supersedes FR-057's always-regular requirement.
 
 ### Key Entities
 
