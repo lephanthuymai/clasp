@@ -7,24 +7,57 @@ The repository is developed with [GitHub Spec Kit](https://github.com/github/spe
 requirements, architecture decisions, contracts, and implementation tasks live in
 [`specs/001-capture-to-notion`](specs/001-capture-to-notion/).
 
-## Current MVP
+## Features
 
-- Captures selected text and source-app context through macOS Accessibility.
-- Opens a compact native review panel from a configurable global shortcut.
-- Creates Tasks or Bookmarks with optional URL, due date, and tags.
-- Creates and validates dedicated `Clasp Tasks` and `Clasp Bookmarks` databases.
-- Hands a Task to a persistent Codex conversation with an optional instruction and a dynamically
-  discovered local project folder, then mirrors Codex lifecycle progress back to Notion.
-- Opens a main window with separate Tasks and Bookmarks tabs loaded from Notion.
-- Creates new Tasks and Bookmarks manually without requiring a source-app selection.
-- Stores the Notion integration token only in macOS Keychain.
-- Persists every confirmed capture locally before network delivery.
-- Keeps pending and failed captures available for manual retry.
-- Routes each capture to its type-specific database and retains failed captures for retry.
-- Uses Accessibility first and, only after the user invokes Capture, falls back to a temporary
-  Copy for apps such as Slack that do not expose selected text; the previous clipboard contents
-  are restored immediately.
-- Sends no analytics or captured data anywhere except the configured Notion workspace.
+Clasp opens from the macOS menu bar or a configurable global shortcut. It uses Accessibility
+to capture selected text and source context, with an explicit temporary Copy fallback for apps
+such as Slack that do not expose their selection. The previous clipboard contents are restored
+immediately.
+
+### Task Management
+
+- Capture selected text as a Task or create one manually from the main window.
+- Track Name, Source, Due Date, Priority, Notes, Progress, Created Date, and Done in Notion.
+- Edit Priority and Due Date directly in Clasp.
+- Sort active Tasks by Priority—High, Medium, then Low—and then by earliest Due Date.
+- Mark a Task done to hide it from Clasp without deleting its Notion page.
+- Delete a Task from Clasp with confirmation when it should be moved to Notion Trash.
+- Preserve confirmed captures locally before delivery and retain failed deliveries for retry.
+
+### Bookmark Management
+
+- Capture selected text as a Bookmark or create one manually from the main window.
+- Track Name, Source, Created Date, and Done in a dedicated Notion database.
+- Open source links and the corresponding Notion page directly from Clasp.
+- Mark a Bookmark done to hide it from the active list, or move it to Notion Trash with the
+  confirmed Delete action.
+- Preserve confirmed captures locally before delivery and retain failed deliveries for retry.
+
+### Pomodoro Timer
+
+- Run a 25-minute Focus session or a 5-minute Break from above the Tasks and Bookmarks tabs.
+- Start, pause, resume, and reset the timer while viewing its remaining time and progress.
+- Meet Mochi, the animated break companion, during Break sessions.
+- Play an original relaxing ambient soundscape during a Break, with an accessible audio toggle.
+
+### Integrations
+
+#### Notion
+
+- Create and validate dedicated `Clasp Tasks` and `Clasp Bookmarks` databases under a shared
+  parent page.
+- Load active Tasks and Bookmarks into separate tabs and synchronize edits back to Notion.
+- Store the Notion integration token only in macOS Keychain.
+- Route every entry to its type-specific database without sending analytics or captured content
+  elsewhere.
+
+#### Codex
+
+- Hand a Task to a persistent Codex conversation with an optional instruction.
+- Choose from dynamically discovered local Codex project folders, with a configurable default.
+- Include the stable Clasp Task ID and a link to the Notion Task in the conversation.
+- Show the conversation link immediately while Codex works and mirror its lifecycle Progress to
+  Notion without automatically checking Done.
 
 ## Requirements
 
@@ -49,8 +82,8 @@ selection access.
 
 | Database | Properties |
 |---|---|
-| Clasp Tasks | Name, Source, Due Date, Priority, Notes, Progress, Done |
-| Clasp Bookmarks | Name, Source, Done |
+| Clasp Tasks | Name, Source, Due Date, Priority, Notes, Progress, Created Date, Done |
+| Clasp Bookmarks | Name, Source, Created Date, Done |
 
 6. In Clasp Settings, enter the integration token and shared parent page URL or ID.
 7. Select **Create Clasp Databases**. The token is written to Keychain only after both
