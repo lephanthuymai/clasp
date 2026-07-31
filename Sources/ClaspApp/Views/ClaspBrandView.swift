@@ -2,6 +2,9 @@ import AppKit
 import SwiftUI
 
 enum ClaspBrand {
+    static let accent = Color(red: 0.25, green: 0.38, blue: 0.98)
+    static let accentSoft = Color(red: 0.43, green: 0.52, blue: 1.0)
+
     static let logo: NSImage? = {
         guard let url = Bundle.main.url(
             forResource: "ClaspLogo",
@@ -108,5 +111,111 @@ struct ClaspBrandHeader: View {
             Spacer()
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+struct ClaspBackdrop: View {
+    var body: some View {
+        ZStack {
+            Color(nsColor: .windowBackgroundColor)
+
+            LinearGradient(
+                colors: [
+                    ClaspBrand.accent.opacity(0.10),
+                    ClaspBrand.accentSoft.opacity(0.035),
+                    Color.clear
+                ],
+                startPoint: .topLeading,
+                endPoint: .center
+            )
+
+            Circle()
+                .fill(ClaspBrand.accentSoft.opacity(0.07))
+                .frame(width: 420, height: 420)
+                .blur(radius: 80)
+                .offset(x: 360, y: -240)
+        }
+        .ignoresSafeArea()
+    }
+}
+
+private struct ClaspCardModifier: ViewModifier {
+    let padding: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .padding(padding)
+            .background(.regularMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color.primary.opacity(0.075), lineWidth: 1)
+            }
+            .shadow(color: .black.opacity(0.055), radius: 18, y: 8)
+    }
+}
+
+extension View {
+    func claspCard(padding: CGFloat = 18) -> some View {
+        modifier(ClaspCardModifier(padding: padding))
+    }
+}
+
+struct ClaspSectionHeading: View {
+    let icon: String
+    let title: String
+    let subtitle: String?
+
+    init(_ title: String, icon: String, subtitle: String? = nil) {
+        self.title = title
+        self.icon = icon
+        self.subtitle = subtitle
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 11) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(ClaspBrand.accent)
+                .frame(width: 30, height: 30)
+                .background(ClaspBrand.accent.opacity(0.11), in: RoundedRectangle(cornerRadius: 9))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.headline)
+                if let subtitle {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Spacer()
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+struct ClaspStatusBanner: View {
+    let message: String
+    var isError = false
+
+    var body: some View {
+        HStack(spacing: 9) {
+            Image(systemName: isError ? "exclamationmark.circle.fill" : "info.circle.fill")
+                .foregroundStyle(isError ? Color.red : ClaspBrand.accent)
+            Text(message)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .textSelection(.enabled)
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
+        .background(
+            (isError ? Color.red : ClaspBrand.accent).opacity(0.075),
+            in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+        )
+        .accessibilityLabel("Status: \(message)")
     }
 }

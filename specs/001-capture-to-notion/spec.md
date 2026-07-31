@@ -297,6 +297,12 @@ Bookmark manually and confirm both appear in the correct Notion database after r
   sends the page to Notion Trash with `in_trash: true`. Clasp MUST remove the row only after a
   successful response, explain that the page is recoverable from Trash, and disable deletion
   while its Codex Progress is `Working`.
+- **FR-054**: Clasp MUST present its main library, capture panel, manual-entry sheet, Ask Codex
+  sheet, settings, and recent-captures window with one cohesive modern visual system. The system
+  MUST retain native macOS conventions and accessibility while providing clear hierarchy,
+  prominent primary actions, legible state badges, consistent branded surfaces, and unambiguous
+  interactive controls. This visual refresh MUST preserve all existing behavior and keyboard
+  shortcuts.
 
 ### Key Entities
 

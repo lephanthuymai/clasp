@@ -7,42 +7,60 @@ struct RecentCapturesView: View {
     @State private var captureToDelete: Capture?
 
     var body: some View {
-        Group {
-            if model.captures.isEmpty {
-                ContentUnavailableView {
-                    Label("No Captures Yet", systemImage: "paperclip")
-                } description: {
-                    Text("Select text in another app and invoke Clasp to create your first item.")
+        ZStack {
+            ClaspBackdrop()
+
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 13) {
+                    ClaspLogoView(size: 44)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Recent captures")
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                        Text("Local delivery history and retry status")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Button {
+                        Task { try? await model.refresh() }
+                    } label: {
+                        Label("Refresh", systemImage: "arrow.clockwise")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
                 }
-            } else {
-                List(model.captures) { capture in
-                    CaptureRow(model: model, capture: capture) {
-                        captureToDelete = capture
+
+                Group {
+                    if model.captures.isEmpty {
+                        ContentUnavailableView {
+                            Label("No captures yet", systemImage: "paperclip")
+                        } description: {
+                            Text("Select text in another app and invoke Clasp to create your first item.")
+                        }
+                    } else {
+                        List(model.captures) { capture in
+                            CaptureRow(model: model, capture: capture) {
+                                captureToDelete = capture
+                            }
+                        }
+                        .scrollContentBackground(.hidden)
                     }
                 }
-            }
-        }
-        .navigationTitle("Recent Captures")
-        .toolbar {
-            ToolbarItem {
-                Button {
-                    Task { try? await model.refresh() }
-                } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(.regularMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(Color.primary.opacity(0.075), lineWidth: 1)
+                }
+
+                if let message = model.statusMessage {
+                    ClaspStatusBanner(message: message)
                 }
             }
+            .padding(20)
         }
-        .overlay(alignment: .bottom) {
-            if let message = model.statusMessage {
-                Text(message)
-                    .font(.callout)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(.regularMaterial, in: Capsule())
-                    .padding()
-                    .accessibilityLabel("Status: \(message)")
-            }
-        }
+        .navigationTitle("Recent Captures")
         .task { await model.load() }
         .confirmationDialog(
             "Delete this local capture?",

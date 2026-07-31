@@ -10,87 +10,65 @@ struct LibraryView: View {
     @State private var deleteConfirmationItem: NotionListItem?
 
     var body: some View {
-        VStack(spacing: 0) {
-            ClaspBrandHeader(
-                subtitle: "Your central task and bookmark management",
-                logoSize: 34
-            )
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+        ZStack {
+            ClaspBackdrop()
 
-            Divider()
+            VStack(spacing: 16) {
+                libraryHeader
+                libraryNavigation
 
-            Picker("Library", selection: $selectedType) {
-                Label("Tasks", systemImage: "checkmark.circle")
-                    .tag(CaptureType.task)
-                Label("Bookmarks", systemImage: "bookmark")
-                    .tag(CaptureType.bookmark)
+                Group {
+                    switch selectedType {
+                    case .task:
+                        itemList(
+                            model.notionTasks,
+                            type: .task,
+                            emptyTitle: "No tasks yet",
+                            emptyDescription: "Create a task here or capture text from any app."
+                        )
+                    case .bookmark:
+                        itemList(
+                            model.notionBookmarks,
+                            type: .bookmark,
+                            emptyTitle: "No bookmarks yet",
+                            emptyDescription: "Save a bookmark here or capture one from any app."
+                        )
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(.regularMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(Color.primary.opacity(0.075), lineWidth: 1)
+                }
+                .shadow(color: .black.opacity(0.045), radius: 16, y: 8)
+
+                if let message = model.statusMessage {
+                    ClaspStatusBanner(message: message)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .frame(width: 220)
-            .padding(.vertical, 10)
-
-            Divider()
-
-            switch selectedType {
-            case .task:
-                itemList(
-                    model.notionTasks,
-                    type: .task,
-                    emptyTitle: "No Tasks",
-                    emptyDescription: "Create a task here or capture one from another app."
-                )
-            case .bookmark:
-                itemList(
-                    model.notionBookmarks,
-                    type: .bookmark,
-                    emptyTitle: "No Bookmarks",
-                    emptyDescription: "Create a bookmark here or capture one from another app."
-                )
-            }
-
-            if let message = model.statusMessage {
-                Divider()
-                Text(message)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 9)
-                    .textSelection(.enabled)
-                    .accessibilityLabel("Status: \(message)")
-            }
+            .padding(20)
         }
         .navigationTitle("Clasp")
-        .toolbar {
-            ToolbarItemGroup {
-                Button {
-                    Task { await model.loadLibrary() }
-                } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise")
-                }
-                .disabled(model.isLibraryLoading)
-
-                Button {
-                    showingNewEntry = true
-                } label: {
-                    Label(
-                        selectedType == .task ? "New Task" : "New Bookmark",
-                        systemImage: "plus"
-                    )
-                }
-                .keyboardShortcut("n", modifiers: .command)
-                .disabled(model.destinations == nil)
-            }
-        }
+        .animation(.easeInOut(duration: 0.18), value: selectedType)
         .overlay {
             if model.isLibraryLoading
                 && model.notionTasks.isEmpty
                 && model.notionBookmarks.isEmpty {
-                ProgressView("Loading from Notion…")
-                    .padding(18)
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                VStack(spacing: 11) {
+                    ProgressView()
+                        .controlSize(.large)
+                    Text("Syncing with Notion")
+                        .font(.callout.weight(.medium))
+                    Text("Loading your latest items…")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 28)
+                .padding(.vertical, 22)
+                .claspCard(padding: 0)
             }
         }
         .sheet(isPresented: $showingNewEntry) {
@@ -124,6 +102,117 @@ struct LibraryView: View {
             await model.load()
             await model.loadLibrary()
         }
+    }
+
+    private var libraryHeader: some View {
+        HStack(spacing: 14) {
+            ClaspLogoView(size: 48)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Clasp")
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                Text("Your central task and bookmark management")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Button {
+                Task { await model.loadLibrary() }
+            } label: {
+                Label("Refresh", systemImage: "arrow.clockwise")
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.large)
+            .disabled(model.isLibraryLoading)
+            .help("Refresh from Notion")
+
+            Button {
+                showingNewEntry = true
+            } label: {
+                Label(
+                    selectedType == .task ? "New Task" : "New Bookmark",
+                    systemImage: "plus"
+                )
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .tint(ClaspBrand.accent)
+            .keyboardShortcut("n", modifiers: .command)
+            .disabled(model.destinations == nil)
+        }
+        .padding(.horizontal, 2)
+    }
+
+    private var libraryNavigation: some View {
+        HStack(spacing: 5) {
+            libraryTab(
+                .task,
+                title: "Tasks",
+                symbol: "checkmark.circle",
+                count: model.notionTasks.count
+            )
+            libraryTab(
+                .bookmark,
+                title: "Bookmarks",
+                symbol: "bookmark",
+                count: model.notionBookmarks.count
+            )
+            Spacer()
+
+            Label(
+                model.isLibraryLoading ? "Syncing…" : "Synced with Notion",
+                systemImage: model.isLibraryLoading
+                    ? "arrow.triangle.2.circlepath"
+                    : "checkmark.circle.fill"
+            )
+            .font(.caption.weight(.medium))
+            .foregroundStyle(model.isLibraryLoading ? Color.secondary : Color.green)
+            .padding(.trailing, 6)
+        }
+        .padding(5)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color.primary.opacity(0.065), lineWidth: 1)
+        }
+    }
+
+    private func libraryTab(
+        _ type: CaptureType,
+        title: String,
+        symbol: String,
+        count: Int
+    ) -> some View {
+        Button {
+            selectedType = type
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: symbol)
+                Text(title)
+                Text("\(count)")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(selectedType == type ? ClaspBrand.accent : .secondary)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(
+                        (selectedType == type ? Color.white : Color.primary)
+                            .opacity(selectedType == type ? 0.88 : 0.06),
+                        in: Capsule()
+                    )
+            }
+            .font(.callout.weight(.semibold))
+            .foregroundStyle(selectedType == type ? Color.white : Color.primary)
+            .padding(.horizontal, 14)
+            .frame(height: 36)
+            .background(
+                selectedType == type ? ClaspBrand.accent : Color.clear,
+                in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selectedType == type ? .isSelected : [])
     }
 
     @ViewBuilder
@@ -215,7 +304,7 @@ struct LibraryView: View {
             }
             .width(58)
         }
-        .tableStyle(.inset(alternatesRowBackgrounds: true))
+        .tableStyle(.inset(alternatesRowBackgrounds: false))
         .accessibilityLabel("Notion tasks table")
     }
 
@@ -249,7 +338,7 @@ struct LibraryView: View {
             }
             .width(58)
         }
-        .tableStyle(.inset(alternatesRowBackgrounds: true))
+        .tableStyle(.inset(alternatesRowBackgrounds: false))
         .accessibilityLabel("Notion bookmarks table")
     }
 
@@ -259,9 +348,10 @@ struct LibraryView: View {
             Task { await model.markDone(item) }
         } label: {
             Image(systemName: "square")
-                .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(.tint)
-                .frame(width: 24, height: 24)
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(ClaspBrand.accent)
+                .frame(width: 28, height: 28)
+                .background(ClaspBrand.accent.opacity(0.065), in: RoundedRectangle(cornerRadius: 7))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -281,8 +371,9 @@ struct LibraryView: View {
                     .frame(width: 24, height: 24)
             } else {
                 Image(systemName: "trash")
-                    .foregroundStyle(.red)
-                    .frame(width: 24, height: 24)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 28, height: 28)
+                    .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 7))
                     .contentShape(Rectangle())
             }
         }
@@ -331,7 +422,11 @@ struct LibraryView: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
-                .foregroundStyle(.primary)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(priorityColor(item.priority))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .background(priorityColor(item.priority).opacity(0.10), in: Capsule())
             }
             .menuStyle(.borderlessButton)
             .fixedSize()
@@ -344,10 +439,22 @@ struct LibraryView: View {
 
     private func progressCell(for item: NotionListItem) -> some View {
         Label(item.progress.displayName, systemImage: progressIcon(item.progress))
-            .font(.callout)
+            .font(.caption.weight(.medium))
             .foregroundStyle(progressColor(item.progress))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(progressColor(item.progress).opacity(0.10), in: Capsule())
             .lineLimit(1)
             .help("Codex progress: \(item.progress.displayName)")
+    }
+
+    private func priorityColor(_ priority: TaskPriority?) -> Color {
+        switch priority {
+        case .high: .red
+        case .medium: .orange
+        case .low: .blue
+        case nil: .secondary
+        }
     }
 
     @ViewBuilder
@@ -386,6 +493,7 @@ struct LibraryView: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
+            .tint(ClaspBrand.accent)
             .help("Create a Codex conversation for \(item.taskID)")
         }
     }
@@ -488,23 +596,24 @@ private struct AskCodexView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            dialogHeader
-            Divider()
+        ZStack {
+            ClaspBackdrop()
 
-            VStack(alignment: .leading, spacing: 20) {
-                taskContext
-                instructionEditor
-                workspaceDisclosure
+            VStack(spacing: 0) {
+                dialogHeader
+
+                VStack(alignment: .leading, spacing: 18) {
+                    taskContext
+                    instructionEditor
+                    workspaceDisclosure
+                }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 18)
+
+                actionFooter
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 22)
-
-            Divider()
-            actionFooter
         }
         .frame(width: 580)
-        .background(Color(nsColor: .windowBackgroundColor))
         .onAppear {
             instructionFocused = true
         }
@@ -533,6 +642,7 @@ private struct AskCodexView: View {
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 18)
+        .background(.ultraThinMaterial)
     }
 
     private var taskContext: some View {
@@ -675,6 +785,7 @@ private struct AskCodexView: View {
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
+        .background(.ultraThinMaterial)
     }
 }
 
@@ -781,77 +892,117 @@ private struct ManualEntryView: View {
     @State private var validationMessage: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(type == .task ? "New Task" : "New Bookmark")
-                .font(.title2.weight(.semibold))
+        ZStack {
+            ClaspBackdrop()
 
-            Form {
-                TextField("Name", text: $title)
-                    .textFieldStyle(.roundedBorder)
+            VStack(alignment: .leading, spacing: 18) {
+                HStack(spacing: 13) {
+                    ClaspLogoView(size: 46)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(type == .task ? "New Task" : "New Bookmark")
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                        Text(
+                            type == .task
+                                ? "Add something you want to act on"
+                                : "Save something worth returning to"
+                        )
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                }
 
-                TextField("Source URL or file path", text: $source)
-                    .textFieldStyle(.roundedBorder)
+                VStack(alignment: .leading, spacing: 14) {
+                    TextField("Name", text: $title)
+                        .textFieldStyle(.roundedBorder)
+                        .controlSize(.large)
 
-                if type == .task {
-                    Picker("Priority", selection: $priority) {
-                        ForEach(TaskPriority.allCases, id: \.self) {
-                            Text($0.displayName).tag($0)
+                    TextField("Source URL or file path (optional)", text: $source)
+                        .textFieldStyle(.roundedBorder)
+                        .controlSize(.large)
+
+                    if type == .task {
+                        Picker("Priority", selection: $priority) {
+                            ForEach(TaskPriority.allCases, id: \.self) {
+                                Text($0.displayName).tag($0)
+                            }
+                        }
+
+                        Toggle("Add a due date", isOn: $includeDueDate)
+                        if includeDueDate {
+                            DatePicker(
+                                "Due",
+                                selection: $dueDate,
+                                displayedComponents: .date
+                            )
+                        }
+
+                        VStack(alignment: .leading, spacing: 7) {
+                            Text("Notes")
+                                .font(.subheadline.weight(.semibold))
+                            ZStack(alignment: .topLeading) {
+                                TextEditor(text: $notes)
+                                    .scrollContentBackground(.hidden)
+                                    .padding(8)
+                                if notes.isEmpty {
+                                    Text("Add context or details…")
+                                        .foregroundStyle(.tertiary)
+                                        .padding(.horizontal, 13)
+                                        .padding(.vertical, 12)
+                                        .allowsHitTesting(false)
+                                }
+                            }
+                            .frame(minHeight: 130)
+                            .background(
+                                Color(nsColor: .textBackgroundColor),
+                                in: RoundedRectangle(cornerRadius: 12)
+                            )
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.primary.opacity(0.12), lineWidth: 1)
+                            }
                         }
                     }
+                }
+                .claspCard()
 
-                    Toggle("Due date", isOn: $includeDueDate)
-                    if includeDueDate {
-                        DatePicker(
-                            "Due",
-                            selection: $dueDate,
-                            displayedComponents: .date
+                if let validationMessage {
+                    ClaspStatusBanner(message: validationMessage, isError: true)
+                }
+
+                HStack {
+                    Button("Cancel", role: .cancel) {
+                        dismiss()
+                    }
+                    .keyboardShortcut(.cancelAction)
+                    .controlSize(.large)
+
+                    Spacer()
+
+                    if model.isBusy {
+                        ProgressView()
+                            .controlSize(.small)
+                    }
+
+                    Button {
+                        create()
+                    } label: {
+                        Label(
+                            type == .task ? "Create Task" : "Save Bookmark",
+                            systemImage: type == .task ? "checkmark" : "bookmark"
                         )
                     }
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Notes")
-                        TextEditor(text: $notes)
-                            .frame(minHeight: 120)
-                            .padding(4)
-                            .background(
-                                .quaternary.opacity(0.35),
-                                in: RoundedRectangle(cornerRadius: 8)
-                            )
-                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .tint(ClaspBrand.accent)
+                    .keyboardShortcut(.return, modifiers: .command)
+                    .disabled(model.isBusy || !canCreate)
                 }
             }
-            .formStyle(.grouped)
-
-            if let validationMessage {
-                Text(validationMessage)
-                    .font(.callout)
-                    .foregroundStyle(.red)
-            }
-
-            HStack {
-                Button("Cancel", role: .cancel) {
-                    dismiss()
-                }
-                .keyboardShortcut(.cancelAction)
-
-                Spacer()
-
-                if model.isBusy {
-                    ProgressView()
-                        .controlSize(.small)
-                }
-
-                Button("Create") {
-                    create()
-                }
-                .buttonStyle(.borderedProminent)
-                .keyboardShortcut(.return, modifiers: .command)
-                .disabled(model.isBusy || !canCreate)
-            }
+            .padding(22)
         }
-        .padding(22)
-        .frame(width: 500)
-        .frame(minHeight: type == .task ? 500 : 260)
+        .frame(width: 540)
+        .frame(minHeight: type == .task ? 540 : 330)
     }
 
     private var canCreate: Bool {

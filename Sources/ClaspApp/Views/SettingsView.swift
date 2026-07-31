@@ -18,34 +18,38 @@ struct SettingsView: View {
     @State private var showingRemoveConfirmation = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            ClaspBrandHeader(
-                subtitle: "Settings",
-                logoSize: 42
-            )
-            .padding(.horizontal, 22)
-            .padding(.top, 18)
-            .padding(.bottom, 10)
+        ZStack {
+            ClaspBackdrop()
 
-            Form {
-                notionSection
-                codexSection
-                permissionSection
-                shortcutSection
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack(spacing: 14) {
+                        ClaspLogoView(size: 50)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Settings")
+                                .font(.system(size: 23, weight: .bold, design: .rounded))
+                            Text("Connect your tools and shape how Clasp works")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                    }
+                    .padding(.bottom, 2)
 
-                if let message = model.statusMessage {
-                    Section("Status") {
-                        Text(message)
-                            .foregroundStyle(.secondary)
-                            .textSelection(.enabled)
-                            .accessibilityLabel("Status: \(message)")
+                    notionSection
+                    codexSection
+                    permissionSection
+                    shortcutSection
+
+                    if let message = model.statusMessage {
+                        ClaspStatusBanner(message: message)
                     }
                 }
+                .padding(22)
             }
-            .formStyle(.grouped)
         }
-        .frame(width: 580)
-        .frame(minHeight: 660)
+        .frame(width: 620)
+        .frame(minHeight: 720)
         .task {
             await model.load()
             parentPageID = model.destinations?.parentPageID ?? parentPageID
@@ -66,14 +70,23 @@ struct SettingsView: View {
     }
 
     private var codexSection: some View {
-        Section {
+        VStack(alignment: .leading, spacing: 14) {
+            ClaspSectionHeading(
+                "Codex workspace",
+                icon: "sparkles",
+                subtitle: "Choose where new Ask Codex conversations run"
+            )
+
             TextField("Codex workspace folder", text: $codexWorkspacePath)
                 .textFieldStyle(.roundedBorder)
+                .controlSize(.large)
                 .accessibilityLabel("Codex workspace folder")
 
             HStack {
-                Button("Choose Folder…") {
+                Button {
                     chooseCodexWorkspaceFolder()
+                } label: {
+                    Label("Choose Folder…", systemImage: "folder")
                 }
                 Spacer()
                 Button("Save Workspace") {
@@ -82,14 +95,16 @@ struct SettingsView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
+                .tint(ClaspBrand.accent)
             }
-        } header: {
-            Text("Codex")
-        } footer: {
+
             Text(
                 "New Ask Codex conversations run in this folder and inherit its project instructions, skills, and configuration."
             )
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
+        .claspCard()
     }
 
     private func chooseCodexWorkspaceFolder() {
@@ -113,7 +128,13 @@ struct SettingsView: View {
     }
 
     private var notionSection: some View {
-        Section {
+        VStack(alignment: .leading, spacing: 16) {
+            ClaspSectionHeading(
+                "Notion",
+                icon: "square.grid.2x2",
+                subtitle: "Sync tasks and bookmarks with your private workspace"
+            )
+
             destinationStatus
 
             VStack(alignment: .leading, spacing: 6) {
@@ -134,6 +155,7 @@ struct SettingsView: View {
                     text: $token
                 )
                 .textFieldStyle(.roundedBorder)
+                .controlSize(.large)
                 .textContentType(.password)
                 .accessibilityLabel("Notion integration token")
             }
@@ -152,6 +174,7 @@ struct SettingsView: View {
                 }
                 TextField("Paste the shared Notion page URL or ID", text: $parentPageID)
                     .textFieldStyle(.roundedBorder)
+                    .controlSize(.large)
                     .textContentType(.URL)
                     .accessibilityLabel("Notion parent page URL or ID")
                 Text("Clasp creates “Clasp Tasks” and “Clasp Bookmarks” as full-page databases under this page.")
@@ -174,6 +197,7 @@ struct SettingsView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
+                .tint(ClaspBrand.accent)
                 .disabled(model.isBusy || setupValuesMissing)
 
                 if model.isBusy {
@@ -210,28 +234,46 @@ struct SettingsView: View {
                 }
                 .padding(.vertical, 4)
             }
-        } header: {
-            Text("Notion")
-        } footer: {
+
             Text("Enable Read, Insert, and Update content, then share the parent page with your integration. The token stays in your Mac’s Keychain.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
+        .claspCard()
     }
 
     @ViewBuilder
     private var destinationStatus: some View {
         if let destinations = model.destinations {
-            VStack(alignment: .leading, spacing: 5) {
-                Label("Both databases ready", systemImage: "checkmark.circle.fill")
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
-                Text("Tasks: \(destinations.tasks.dataSourceName)")
-                Text("Bookmarks: \(destinations.bookmarks.dataSourceName)")
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Connected")
+                        .font(.callout.weight(.semibold))
+                    Text("\(destinations.tasks.dataSourceName) · \(destinations.bookmarks.dataSourceName)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
             }
-            .font(.callout)
+            .padding(12)
+            .background(.green.opacity(0.075), in: RoundedRectangle(cornerRadius: 12))
         } else {
-            LabeledContent("Connection") {
-                Label("Not configured", systemImage: "exclamationmark.circle")
-                    .foregroundStyle(.secondary)
+            HStack(spacing: 10) {
+                Image(systemName: "exclamationmark.circle.fill")
+                    .foregroundStyle(.orange)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Not connected")
+                        .font(.callout.weight(.semibold))
+                    Text("Add a token and parent page to get started.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
             }
+            .padding(12)
+            .background(.orange.opacity(0.075), in: RoundedRectangle(cornerRadius: 12))
         }
     }
 
@@ -242,22 +284,39 @@ struct SettingsView: View {
     }
 
     private var permissionSection: some View {
-        Section {
-            LabeledContent("Selection access") {
+        VStack(alignment: .leading, spacing: 14) {
+            ClaspSectionHeading(
+                "Accessibility",
+                icon: "hand.raised",
+                subtitle: "Read selected text only when you invoke Capture"
+            )
+
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Selection access")
+                        .font(.callout.weight(.medium))
+                    Text(
+                        "Clasp reads the selected text and exposed source metadata only when you invoke Capture. It does not monitor typing."
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 18)
                 Label(
                     model.accessibilityGranted ? "Enabled" : "Not enabled",
                     systemImage: model.accessibilityGranted
                         ? "checkmark.circle.fill"
                         : "lock.circle"
                 )
-                .foregroundStyle(model.accessibilityGranted ? .green : .secondary)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(model.accessibilityGranted ? Color.green : Color.secondary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    (model.accessibilityGranted ? Color.green : Color.secondary).opacity(0.10),
+                    in: Capsule()
+                )
             }
-
-            Text(
-                "Clasp reads the selected text and exposed source metadata only when you invoke Capture. It does not monitor typing."
-            )
-            .font(.callout)
-            .foregroundStyle(.secondary)
 
             HStack {
                 Button("Request Access") {
@@ -275,13 +334,18 @@ struct SettingsView: View {
                     model.recheckAccessibilityPermission()
                 }
             }
-        } header: {
-            Text("Accessibility Permission")
         }
+        .claspCard()
     }
 
     private var shortcutSection: some View {
-        Section {
+        VStack(alignment: .leading, spacing: 14) {
+            ClaspSectionHeading(
+                "Global shortcut",
+                icon: "command",
+                subtitle: "Open Capture from anywhere on your Mac"
+            )
+
             Picker("Key", selection: $model.shortcut.keyCode) {
                 ForEach(GlobalShortcut.availableKeys, id: \.code) { key in
                     Text(key.label).tag(key.code)
@@ -293,27 +357,36 @@ struct SettingsView: View {
             }
 
             HStack {
-                Toggle("⌘ Command", isOn: $model.shortcut.command)
-                Toggle("⌃ Control", isOn: $model.shortcut.control)
-                Toggle("⌥ Option", isOn: $model.shortcut.option)
-                Toggle("⇧ Shift", isOn: $model.shortcut.shift)
+                Toggle("⌘", isOn: $model.shortcut.command)
+                    .help("Command")
+                Toggle("⌃", isOn: $model.shortcut.control)
+                    .help("Control")
+                Toggle("⌥", isOn: $model.shortcut.option)
+                    .help("Option")
+                Toggle("⇧", isOn: $model.shortcut.shift)
+                    .help("Shift")
             }
 
             HStack {
-                Text("Current: \(model.shortcut.displayName)")
-                    .monospaced()
-                    .foregroundStyle(.secondary)
+                Text(model.shortcut.displayName)
+                    .font(.title3.monospaced().weight(.semibold))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 9))
                 Spacer()
                 Button("Apply Shortcut") {
                     model.applyShortcut()
                 }
+                .buttonStyle(.borderedProminent)
+                .tint(ClaspBrand.accent)
                 .disabled(!model.shortcut.isValid)
             }
-        } header: {
-            Text("Global Shortcut")
-        } footer: {
+
             Text("Clasp registers only this shortcut; it does not install a general keyboard monitor.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
+        .claspCard()
     }
 
     private func schemaRow(_ database: String, _ fields: String) -> some View {

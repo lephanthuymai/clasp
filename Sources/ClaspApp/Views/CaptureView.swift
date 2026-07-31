@@ -38,125 +38,180 @@ struct CaptureView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                header
+        ZStack {
+            ClaspBackdrop()
 
-                if let notice {
-                    noticeBanner(notice)
-                }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    header
 
-                Picker("Capture type", selection: $draft.type) {
-                    ForEach(CaptureType.allCases, id: \.self) { type in
-                        Text(type.displayName).tag(type)
+                    if let notice {
+                        noticeBanner(notice)
                     }
-                }
-                .pickerStyle(.segmented)
-                .accessibilityLabel("Capture type")
 
-                HStack {
-                    TextField("Name", text: $draft.title)
-                        .textFieldStyle(.roundedBorder)
-                        .focused($focusedField, equals: .title)
-                        .accessibilityLabel("Capture name")
-                    if draft.type == .bookmark {
-                        Button("Paste") {
-                            pasteBookmarkNameExplicitly()
-                        }
-                        .help("Insert clipboard text as the bookmark name")
-                        .accessibilityHint("Reads the clipboard only when activated")
-                    }
-                }
-
-                if draft.type == .task {
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            Text("Notes")
-                                .font(.headline)
-                            Spacer()
-                            Button("Paste") {
-                                pasteExplicitly()
+                    VStack(alignment: .leading, spacing: 16) {
+                        Picker("Capture type", selection: $draft.type) {
+                            ForEach(CaptureType.allCases, id: \.self) { type in
+                                Label(
+                                    type.displayName,
+                                    systemImage: type == .task ? "checkmark.circle" : "bookmark"
+                                )
+                                .tag(type)
                             }
-                            .help("Insert clipboard text after your explicit action")
-                            .accessibilityHint("Reads the clipboard only when activated")
                         }
-                        TextEditor(text: $draft.body)
-                            .font(.body)
-                            .frame(minHeight: 130)
-                            .padding(5)
-                            .background(
-                                .quaternary.opacity(0.35),
-                                in: RoundedRectangle(cornerRadius: 8)
+                        .pickerStyle(.segmented)
+                        .controlSize(.large)
+                        .accessibilityLabel("Capture type")
+
+                        HStack {
+                            TextField("What do you want to remember?", text: $draft.title)
+                                .textFieldStyle(.roundedBorder)
+                                .controlSize(.large)
+                                .focused($focusedField, equals: .title)
+                                .accessibilityLabel("Capture name")
+                            if draft.type == .bookmark {
+                                Button {
+                                    pasteBookmarkNameExplicitly()
+                                } label: {
+                                    Label("Paste", systemImage: "doc.on.clipboard")
+                                }
+                                .controlSize(.large)
+                                .help("Insert clipboard text as the bookmark name")
+                                .accessibilityHint("Reads the clipboard only when activated")
+                            }
+                        }
+
+                        if draft.type == .task {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text("Notes")
+                                        .font(.subheadline.weight(.semibold))
+                                    Spacer()
+                                    Button {
+                                        pasteExplicitly()
+                                    } label: {
+                                        Label("Paste", systemImage: "doc.on.clipboard")
+                                    }
+                                    .buttonStyle(.borderless)
+                                    .help("Insert clipboard text after your explicit action")
+                                    .accessibilityHint("Reads the clipboard only when activated")
+                                }
+                                ZStack(alignment: .topLeading) {
+                                    TextEditor(text: $draft.body)
+                                        .font(.body)
+                                        .scrollContentBackground(.hidden)
+                                        .padding(8)
+                                        .focused($focusedField, equals: .content)
+                                        .accessibilityLabel("Task notes")
+                                    if draft.body.isEmpty {
+                                        Text("Add context, details, or the selected text…")
+                                            .foregroundStyle(.tertiary)
+                                            .padding(.horizontal, 13)
+                                            .padding(.vertical, 12)
+                                            .allowsHitTesting(false)
+                                    }
+                                }
+                                .frame(minHeight: 138)
+                                .background(
+                                    Color(nsColor: .textBackgroundColor),
+                                    in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                )
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .stroke(Color.primary.opacity(0.12), lineWidth: 1)
+                                }
+                            }
+                        }
+                    }
+                    .claspCard()
+
+                    VStack(alignment: .leading, spacing: 14) {
+                        ClaspSectionHeading(
+                            "Source",
+                            icon: "link",
+                            subtitle: "Clasp detected this from \(draft.source.applicationName)"
+                        )
+                        TextField("URL or file path (optional)", text: $sourceText)
+                            .textFieldStyle(.roundedBorder)
+                            .controlSize(.large)
+                            .focused($focusedField, equals: .source)
+                            .accessibilityLabel("Source URL or file path")
+                    }
+                    .claspCard()
+
+                    if draft.type == .task {
+                        VStack(alignment: .leading, spacing: 14) {
+                            ClaspSectionHeading(
+                                "Task details",
+                                icon: "slider.horizontal.3",
+                                subtitle: "Set priority and an optional due date"
                             )
-                            .focused($focusedField, equals: .content)
-                            .accessibilityLabel("Task notes")
-                    }
-                }
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Label(draft.source.applicationName, systemImage: "app")
-                        .foregroundStyle(.secondary)
-                        .accessibilityLabel("Source application \(draft.source.applicationName)")
-                    TextField("Source URL or file path (optional)", text: $sourceText)
-                        .textFieldStyle(.roundedBorder)
-                        .focused($focusedField, equals: .source)
-                        .accessibilityLabel("Source URL or file path")
-                }
+                            Picker(
+                                "Priority",
+                                selection: Binding(
+                                    get: { draft.priority ?? .medium },
+                                    set: { draft.priority = $0 }
+                                )
+                            ) {
+                                ForEach(TaskPriority.allCases, id: \.self) { priority in
+                                    Text(priority.displayName).tag(priority)
+                                }
+                            }
 
-                if draft.type == .task {
-                    Picker(
-                        "Priority",
-                        selection: Binding(
-                            get: { draft.priority ?? .medium },
-                            set: { draft.priority = $0 }
-                        )
-                    ) {
-                        ForEach(TaskPriority.allCases, id: \.self) { priority in
-                            Text(priority.displayName).tag(priority)
+                            Toggle("Add a due date", isOn: $includeDueDate)
+                            if includeDueDate {
+                                DatePicker(
+                                    "Due",
+                                    selection: Binding(
+                                        get: { draft.dueDate ?? Date() },
+                                        set: { draft.dueDate = $0 }
+                                    ),
+                                    displayedComponents: .date
+                                )
+                            }
                         }
+                        .claspCard()
                     }
 
-                    Toggle("Due date", isOn: $includeDueDate)
-                    if includeDueDate {
-                        DatePicker(
-                            "Due",
-                            selection: Binding(
-                                get: { draft.dueDate ?? Date() },
-                                set: { draft.dueDate = $0 }
-                            ),
-                            displayedComponents: .date
+                    if let message = validationMessage ?? model.statusMessage {
+                        ClaspStatusBanner(
+                            message: message,
+                            isError: validationMessage != nil
                         )
                     }
-                }
 
-                if let message = validationMessage ?? model.statusMessage {
-                    Text(message)
-                        .font(.callout)
-                        .foregroundStyle(validationMessage == nil ? Color.secondary : Color.red)
-                        .accessibilityLabel("Status: \(message)")
-                }
-
-                HStack {
-                    Button("Cancel", role: .cancel, action: onCancel)
-                        .keyboardShortcut(.cancelAction)
-                    Spacer()
-                    if model.isBusy {
-                        ProgressView()
-                            .controlSize(.small)
-                            .accessibilityLabel("Saving capture")
+                    HStack {
+                        Button("Cancel", role: .cancel, action: onCancel)
+                            .keyboardShortcut(.cancelAction)
+                            .controlSize(.large)
+                        Spacer()
+                        if model.isBusy {
+                            ProgressView()
+                                .controlSize(.small)
+                                .accessibilityLabel("Saving capture")
+                        }
+                        Button {
+                            save()
+                        } label: {
+                            Label(
+                                draft.type == .task ? "Create Task" : "Save Bookmark",
+                                systemImage: draft.type == .task ? "checkmark" : "bookmark"
+                            )
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                        .tint(ClaspBrand.accent)
+                        .keyboardShortcut(.return, modifiers: .command)
+                        .disabled(model.isBusy || !canSave)
                     }
-                    Button("Save") {
-                        save()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .keyboardShortcut(.return, modifiers: .command)
-                    .disabled(model.isBusy || !canSave)
+                    .padding(.top, 2)
                 }
+                .padding(22)
             }
-            .padding(22)
         }
         .frame(width: 590)
-        .frame(minHeight: 520)
+        .frame(minHeight: 560)
         .onAppear { focusedField = .title }
         .onChange(of: draft.type) { _, type in
             if type == .bookmark {
@@ -170,10 +225,17 @@ struct CaptureView: View {
     }
 
     private var header: some View {
-        ClaspBrandHeader(
-            subtitle: "Turn this selection into something you can act on.",
-            logoSize: 42
-        )
+        HStack(spacing: 14) {
+            ClaspLogoView(size: 50)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Capture with Clasp")
+                    .font(.system(size: 23, weight: .bold, design: .rounded))
+                Text("Turn this selection into something you can act on.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
     }
 
     private var canSave: Bool {
@@ -190,9 +252,13 @@ struct CaptureView: View {
             Text(notice.message)
                 .font(.callout)
         }
-        .padding(10)
+        .padding(13)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.orange.opacity(0.13), in: RoundedRectangle(cornerRadius: 8))
+        .background(.orange.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(.orange.opacity(0.18), lineWidth: 1)
+        }
         .accessibilityElement(children: .combine)
     }
 

@@ -26,6 +26,7 @@ final class MainWindowCoordinator: NSObject, NSWindowDelegate {
         window.title = "Clasp"
         window.contentView = NSHostingView(rootView: LibraryView(model: model))
         window.isReleasedWhenClosed = false
+        window.minSize = NSSize(width: 900, height: 540)
         window.setFrameAutosaveName("ClaspMainWindow")
         window.center()
         return window

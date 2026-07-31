@@ -27,6 +27,7 @@ final class SettingsWindowCoordinator: NSObject, NSWindowDelegate {
         window.title = "Clasp Settings"
         window.contentView = NSHostingView(rootView: SettingsView(model: model))
         window.isReleasedWhenClosed = false
+        window.minSize = NSSize(width: 620, height: 680)
         window.setFrameAutosaveName("ClaspSettingsWindow")
         return window
     }

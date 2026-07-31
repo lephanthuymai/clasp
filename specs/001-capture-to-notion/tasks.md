@@ -422,3 +422,13 @@ Environment-limited release checks:
 - [x] T102 Add confirmed Task and Bookmark Delete actions with pending, failure, recovery, and
   active-Codex safeguards, without exposing Created Date in the main table
 - [x] T103 Rebuild, package, migrate the configured Notion databases, and verify the new actions
+
+## Phase 28: Cohesive modern interface
+
+- [x] T104 Add shared branded backdrop, card, section-heading, and status-banner primitives per
+  FR-054
+- [x] T105 Modernize the main library with a workspace header, visible primary actions,
+  count-aware navigation, sync state, refined tables, and clearer status badges
+- [x] T106 Modernize capture, manual entry, Ask Codex, settings, and recent-capture surfaces
+  without changing their model actions, keyboard shortcuts, or validation behavior
+- [x] T107 Rebuild, test, package, and visually verify the complete refreshed interface
