@@ -346,6 +346,10 @@ Bookmark manually and confirm both appear in the correct Notion database after r
   breathing, accompanied by alternating inhale and exhale guidance synchronized to a gentle
   animation. Pausing MUST retain the companion with a paused cue, Reset or Focus MUST hide it,
   and completion MUST retain it with positive feedback.
+- **FR-065**: The guided Break companion MUST be named Mochi and visually reflect the user's
+  white-and-brown/black tabby cat reference without storing the reference photo in the repository.
+  While a Break runs, Clasp MUST speak the inhale and exhale cues, offer an accessible mute control,
+  stop speaking when paused, reset, hidden, or dismissed, and announce completion when audio is on.
 
 ### Key Entities
 

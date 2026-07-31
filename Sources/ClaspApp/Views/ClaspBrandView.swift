@@ -17,7 +17,7 @@ enum ClaspBrand {
 
     static let breakBreathingCat: NSImage? = {
         guard let url = Bundle.main.url(
-            forResource: "BreakBreathingCat",
+            forResource: "BreakBreathingCat-Mochi",
             withExtension: "png"
         ) else {
             return nil

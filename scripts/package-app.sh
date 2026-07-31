@@ -30,8 +30,8 @@ if [[ -n "${CLASP_DEFAULT_CODEX_WORKSPACE_PATH:-}" ]]; then
 fi
 install -m 644 "$repository_root/Resources/Brand/ClaspLogo-v4.png" \
     "$resources_path/ClaspLogo.png"
-install -m 644 "$repository_root/Resources/Brand/BreakBreathingCat.png" \
-    "$resources_path/BreakBreathingCat.png"
+install -m 644 "$repository_root/Resources/Brand/BreakBreathingCat-Mochi.png" \
+    "$resources_path/BreakBreathingCat-Mochi.png"
 install -m 644 "$repository_root/Resources/Clasp.icns" \
     "$resources_path/Clasp.icns"
 

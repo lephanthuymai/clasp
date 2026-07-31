@@ -1,6 +1,24 @@
 import AppKit
+import AVFoundation
 import Combine
 import SwiftUI
+
+@MainActor
+private final class BreathingVoiceGuide: ObservableObject {
+    private let synthesizer = AVSpeechSynthesizer()
+
+    func speak(_ instruction: String) {
+        synthesizer.stopSpeaking(at: .immediate)
+        let utterance = AVSpeechUtterance(string: instruction)
+        utterance.rate = 0.42
+        utterance.pitchMultiplier = 1.08
+        synthesizer.speak(utterance)
+    }
+
+    func stop() {
+        synthesizer.stopSpeaking(at: .immediate)
+    }
+}
 
 struct PomodoroTimerView: View {
     private enum TimerMode: String, CaseIterable, Identifiable {
@@ -28,6 +46,8 @@ struct PomodoroTimerView: View {
     @State private var remainingSeconds = TimerMode.focus.duration
     @State private var isRunning = false
     @State private var catIsInhaling = false
+    @State private var audioInstructionsEnabled = true
+    @StateObject private var voiceGuide = BreathingVoiceGuide()
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var timeText: String {
@@ -47,10 +67,23 @@ struct PomodoroTimerView: View {
     }
 
     private var breathingCue: String {
-        if remainingSeconds == 0 { return "Nice work — break complete" }
+        if remainingSeconds == 0 { return "Nice work — your break with Mochi is complete" }
         if !isRunning { return "Breathing paused" }
         let elapsed = mode.duration - remainingSeconds
         return elapsed % 8 < 4 ? "Breathe in slowly" : "Breathe out slowly"
+    }
+
+    private var spokenBreathingCue: String? {
+        switch breathingCue {
+        case "Breathe in slowly":
+            "Breathe in slowly with Mochi."
+        case "Breathe out slowly":
+            "Breathe out slowly with Mochi."
+        case "Nice work — your break with Mochi is complete":
+            "Nice work. Your break with Mochi is complete."
+        default:
+            nil
+        }
     }
 
     var body: some View {
@@ -137,13 +170,31 @@ struct PomodoroTimerView: View {
                     .accessibilityHidden(true)
 
                     VStack(alignment: .leading, spacing: 5) {
-                        Text("Deep breath break")
-                            .font(.headline)
+                        HStack(spacing: 8) {
+                            Text("Breathe with Mochi")
+                                .font(.headline)
+
+                            Button {
+                                audioInstructionsEnabled.toggle()
+                            } label: {
+                                Image(systemName: audioInstructionsEnabled
+                                    ? "speaker.wave.2.fill"
+                                    : "speaker.slash.fill")
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(audioInstructionsEnabled ? ClaspBrand.accent : .secondary)
+                            .help(audioInstructionsEnabled
+                                ? "Mute Mochi's breathing instructions"
+                                : "Play Mochi's breathing instructions")
+                            .accessibilityLabel(audioInstructionsEnabled
+                                ? "Mute breathing instructions"
+                                : "Enable breathing instructions")
+                        }
                         Text(breathingCue)
                             .font(.callout.weight(.medium))
                             .foregroundStyle(.green)
                             .contentTransition(.numericText())
-                        Text("Relax your shoulders and breathe gently with the cat.")
+                        Text("Relax your shoulders and breathe gently with Mochi.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -153,7 +204,7 @@ struct PomodoroTimerView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .transition(.move(edge: .top).combined(with: .opacity))
-                .accessibilityElement(children: .combine)
+                .accessibilityElement(children: .contain)
             }
         }
         .padding(.horizontal, 14)
@@ -166,6 +217,7 @@ struct PomodoroTimerView: View {
         .onChange(of: mode) { _, newMode in
             isRunning = false
             remainingSeconds = newMode.duration
+            voiceGuide.stop()
         }
         .onChange(of: isRunning) { _, running in
             guard running, mode == .shortBreak else {
@@ -177,6 +229,25 @@ struct PomodoroTimerView: View {
                 catIsInhaling = true
             }
         }
+        .onChange(of: breathingCue) { _, _ in
+            guard mode == .shortBreak,
+                  breakHasStarted,
+                  audioInstructionsEnabled,
+                  let instruction = spokenBreathingCue else {
+                if !isRunning {
+                    voiceGuide.stop()
+                }
+                return
+            }
+            voiceGuide.speak(instruction)
+        }
+        .onChange(of: audioInstructionsEnabled) { _, enabled in
+            guard enabled, isRunning, let instruction = spokenBreathingCue else {
+                voiceGuide.stop()
+                return
+            }
+            voiceGuide.speak(instruction)
+        }
         .onReceive(timer) { _ in
             guard isRunning else { return }
             if remainingSeconds > 1 {
@@ -186,6 +257,9 @@ struct PomodoroTimerView: View {
                 isRunning = false
                 NSSound.beep()
             }
+        }
+        .onDisappear {
+            voiceGuide.stop()
         }
     }
 }

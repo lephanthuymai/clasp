@@ -512,3 +512,11 @@ Environment-limited release checks:
 - [x] T136 Show the cat only after Break starts, with animated inhale/exhale, pause, completion,
   Reset, and Focus behavior per FR-064
 - [x] T137 Rebuild, package, and visually verify the guided breathing companion in Medium mode
+
+## Phase 39: Mochi voice-guided breaks
+
+- [x] T138 Generate and package a transparent breathing illustration using Mochi's coat colors and
+  markings while keeping the private reference photo outside the repository per FR-065
+- [x] T139 Name the companion Mochi and add spoken inhale, exhale, and completion cues with an
+  accessible audio toggle and correct pause, reset, Focus, and dismissal behavior per FR-065
+- [x] T140 Rebuild, test, package, and visually verify the Mochi voice-guided Break in Medium mode
