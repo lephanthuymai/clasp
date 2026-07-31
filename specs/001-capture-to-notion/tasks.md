@@ -388,7 +388,7 @@ Environment-limited release checks:
 - [x] T090 Delay opening a newly created conversation until visible agent activity begins, while
   preserving the full turn lifecycle and Notion Progress updates per FR-048
 - [x] T091 Add a validated, persistent Codex workspace folder setting defaulting to
-  `~/Data/work/truetest-pm-agenthub`, and route new conversations through it per FR-049
+  the locally configured default workspace, and route new conversations through it per FR-049
 - [x] T092 Rebuild, test, package, and verify the configurable active handoff
 
 ## Phase 24: Automatic library reconciliation
@@ -450,7 +450,7 @@ Environment-limited release checks:
 - [x] T113 Discover project folders dynamically through app-server `thread/list` pagination and
   preserve `thread/start.cwd` routing
 - [x] T114 Add a per-task project picker and fallback folder chooser to Ask Codex, defaulting to
-  the configured `truetest-pm-agenthub` project
+  the locally configured default project
 - [x] T115 Rebuild, package, and visually verify dynamic and manually chosen project paths
 
 ## Phase 31: Standard macOS application presence
@@ -474,3 +474,12 @@ Environment-limited release checks:
 - [x] T123 Promote the visible main window to the macOS floating level while preserving normal
   window controls and presentation-mode behavior per FR-059
 - [x] T124 Rebuild, package, and verify Clasp remains visible above another active application
+
+## Phase 34: Private local default project
+
+- [x] T125 Move the initial Codex workspace out of tracked source into the ignored local `.env`
+  with a generic tracked `.env.example` per FR-060
+- [x] T126 Load the local setting during packaging, embed it in the app bundle, and preserve
+  process-environment and user-selected overrides
+- [x] T127 Remove the private project name from current tracked code and documentation, rebuild,
+  test, and verify the packaged configuration without exposing its value

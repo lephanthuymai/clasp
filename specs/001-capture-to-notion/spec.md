@@ -282,7 +282,7 @@ Bookmark manually and confirm both appear in the correct Notion database after r
   user interaction, Clasp MUST release the worker and open the persisted conversation exactly
   once so Codex displays the available agent output rather than a stale prompt-only shell.
 - **FR-049**: Ask Codex MUST create each conversation in a user-configurable local workspace
-  folder. The initial default MUST be `~/Data/work/truetest-pm-agenthub`, and an unavailable
+  folder. The initial default MUST come from the local ignored `.env`, and an unavailable
   configured folder MUST produce an actionable error without silently using another workspace.
 - **FR-050**: After Notion confirms a Task or Bookmark created through manual entry or selection
   capture, Clasp MUST refresh the main library immediately and perform one bounded follow-up
@@ -311,7 +311,7 @@ Bookmark manually and confirm both appear in the correct Notion database after r
   MUST NOT issue overlapping or redundant reads of the same Keychain credential.
 - **FR-056**: Ask Codex MUST let the user choose the local Codex project folder for each Task.
   Clasp MUST dynamically discover valid project folders from persisted Codex thread metadata,
-  keep the configured workspace (initially `~/Data/work/truetest-pm-agenthub`) first and selected
+  keep the locally configured default workspace first and selected
   by default, deduplicate and ignore unavailable folders, and provide a folder chooser for valid
   projects that have no existing Codex conversation. Project choices MUST NOT be hard-coded.
 - **FR-057**: Clasp MUST run as a regular macOS application while retaining its menu-bar item.
@@ -329,6 +329,10 @@ Bookmark manually and confirm both appear in the correct Notion database after r
 - **FR-059**: Whenever the main Clasp window is explicitly visible in Medium or Maximum mode,
   it MUST remain above ordinary application windows, including when another application becomes
   active. The window MUST retain normal close, minimize, move, resize, and mode behavior.
+- **FR-060**: The initial Ask Codex workspace MUST NOT be hard-coded in tracked source. Local
+  builds MUST accept it from the ignored `.env` variable `CLASP_DEFAULT_CODEX_WORKSPACE_PATH`,
+  package it for Finder-launched app bundles, and fall back to dynamic discovery or user folder
+  selection when it is absent. The repository MUST include only a generic `.env.example`.
 
 ### Key Entities
 

@@ -17,12 +17,12 @@ sets its exact name to `[CLASP-XXXXXXXX] <Task Name>`, and starts one turn conta
 - the optional user instruction when non-empty
 
 The default workspace is configurable in Settings and initially resolves to
-`~/Data/work/truetest-pm-agenthub`. Ask Codex queries the documented app-server `thread/list`
-method, extracts unique existing `cwd` values, and presents valid folders as project choices with
-the configured default first. The user can choose any other folder when a project has no existing
-thread. Clasp passes the selected path as `thread/start.cwd` and rejects an unavailable folder
-rather than routing the task elsewhere. The Task ID is deterministically derived from the
-normalized Notion page UUID.
+the path supplied through `CLASP_DEFAULT_CODEX_WORKSPACE_PATH`. Ask Codex queries the documented
+app-server `thread/list` method, extracts unique existing `cwd` values, and presents valid folders
+as project choices with the configured default first. The user can choose any other folder when a
+project has no existing thread. Clasp passes the selected path as `thread/start.cwd` and rejects an
+unavailable folder rather than routing the task elsewhere. The Task ID is deterministically
+derived from the normalized Notion page UUID.
 Clasp stores the returned thread ID locally but does not open its desktop route while the
 app-server turn is active. The Task table shows a non-clickable Working indicator during this
 period. When the worker reaches a waiting or terminal state, Clasp releases the worker, allows a

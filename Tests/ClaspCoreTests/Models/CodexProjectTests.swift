@@ -9,7 +9,7 @@ struct CodexProjectTests {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         let defaultProject = root.appendingPathComponent(
-            "truetest-pm-agenthub",
+            "preferred-project",
             isDirectory: true
         )
         let anotherProject = root.appendingPathComponent("another-project", isDirectory: true)
@@ -33,6 +33,6 @@ struct CodexProjectTests {
         )
 
         #expect(options.map(\.path) == [defaultProject.path, anotherProject.path])
-        #expect(options.map(\.name) == ["truetest-pm-agenthub", "another-project"])
+        #expect(options.map(\.name) == ["preferred-project", "another-project"])
     }
 }

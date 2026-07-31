@@ -92,6 +92,10 @@ Create an ad-hoc-signed local application bundle:
 open dist/Clasp.app
 ```
 
+To provide a local default for the Ask Codex project picker, copy `.env.example` to `.env` and
+set `CLASP_DEFAULT_CODEX_WORKSPACE_PATH`. The ignored `.env` is loaded by the packaging script;
+its value is embedded only in that local app bundle. Release builds should omit this setting.
+
 On the first launch, Clasp opens its setup window. After setup, it remains in the menu bar and
 opens in **Medium** mode by default. Use the menu-bar **Window Mode** menu to switch among Mini
 (menu bar only), Medium (compact window), and Maximum (full-size window). Use **Open Clasp** from

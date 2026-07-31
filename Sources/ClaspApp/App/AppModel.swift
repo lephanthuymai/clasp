@@ -376,12 +376,20 @@ final class AppModel: ObservableObject {
         ), !saved.isEmpty {
             return saved
         }
-        return FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(
-                "Data/work/truetest-pm-agenthub",
-                isDirectory: true
-            )
-            .path
+        let configured = ProcessInfo.processInfo.environment[
+            "CLASP_DEFAULT_CODEX_WORKSPACE_PATH"
+        ] ?? Bundle.main.object(
+            forInfoDictionaryKey: "ClaspDefaultCodexWorkspacePath"
+        ) as? String
+        guard let configured,
+              !configured.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
+            return ""
+        }
+        return URL(
+            fileURLWithPath: NSString(string: configured).expandingTildeInPath,
+            isDirectory: true
+        ).standardizedFileURL.path
     }
 
     func provisionConnection(
