@@ -8,26 +8,44 @@ private final class BreakAudioGuide: ObservableObject {
     private let synthesizer = AVSpeechSynthesizer()
     private let audioEngine = AVAudioEngine()
     private let ambiencePlayer = AVAudioPlayerNode()
+    private let calmVoice: AVSpeechSynthesisVoice?
     private var ambienceBuffer: AVAudioPCMBuffer?
+    private var speechTask: Task<Void, Never>?
 
     init() {
+        calmVoice = Self.bestAvailableCalmVoice()
         audioEngine.attach(ambiencePlayer)
         let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 2)!
         audioEngine.connect(ambiencePlayer, to: audioEngine.mainMixerNode, format: format)
         ambienceBuffer = Self.makeAmbientBuffer(format: format)
-        ambiencePlayer.volume = 0.075
+        ambiencePlayer.volume = 0.30
     }
 
-    func speak(_ instruction: String) {
+    func speakBreathing(direction: String) {
+        stopSpeech()
+        speechTask = Task { [weak self] in
+            guard let self else { return }
+            speakFragment("Breathe")
+            try? await Task.sleep(for: .seconds(1.15))
+            guard !Task.isCancelled else { return }
+            speakFragment(direction)
+        }
+    }
+
+    func speakCompletion() {
+        stopSpeech()
+        speakFragment("Nice work. Your break with Mochi is complete.")
+    }
+
+    private func speakFragment(_ text: String) {
         synthesizer.stopSpeaking(at: .immediate)
-        let utterance = AVSpeechUtterance(string: instruction)
-        utterance.voice = AVSpeechSynthesisVoice(language: Locale.current.identifier)
-            ?? AVSpeechSynthesisVoice(language: "en-US")
-        utterance.rate = 0.34
-        utterance.pitchMultiplier = 0.92
-        utterance.volume = 0.48
-        utterance.preUtteranceDelay = 0.15
-        utterance.postUtteranceDelay = 0.65
+        let utterance = AVSpeechUtterance(string: text)
+        utterance.voice = calmVoice
+        utterance.rate = 0.40
+        utterance.pitchMultiplier = 1.0
+        utterance.volume = 0.25
+        utterance.preUtteranceDelay = 0.08
+        utterance.postUtteranceDelay = 0.25
         synthesizer.speak(utterance)
     }
 
@@ -49,8 +67,24 @@ private final class BreakAudioGuide: ObservableObject {
     }
 
     func stopAll() {
-        synthesizer.stopSpeaking(at: .immediate)
+        stopSpeech()
         stopAmbience()
+    }
+
+    private func stopSpeech() {
+        speechTask?.cancel()
+        speechTask = nil
+        synthesizer.stopSpeaking(at: .immediate)
+    }
+
+    private static func bestAvailableCalmVoice() -> AVSpeechSynthesisVoice? {
+        let englishVoices = AVSpeechSynthesisVoice.speechVoices()
+            .filter { $0.language.hasPrefix("en-") }
+
+        return englishVoices.first { $0.quality == .premium }
+            ?? englishVoices.first { $0.quality == .enhanced }
+            ?? englishVoices.first { $0.name == "Samantha" }
+            ?? AVSpeechSynthesisVoice(language: "en-US")
     }
 
     private static func makeAmbientBuffer(format: AVAudioFormat) -> AVAudioPCMBuffer? {
@@ -63,6 +97,7 @@ private final class BreakAudioGuide: ObservableObject {
         buffer.frameLength = frameCount
 
         let frequencies = [130.81, 164.81, 196.00, 246.94]
+        let melody = [261.63, 329.63, 392.00, 493.88]
         let fadeFrames = Int(format.sampleRate * 0.8)
 
         for frame in 0 ..< Int(frameCount) {
@@ -76,7 +111,15 @@ private final class BreakAudioGuide: ObservableObject {
                     let weight = 1.0 / Double(note.offset + 2)
                     return value + (sin(2 * .pi * note.element * time + stereoOffset) * weight)
                 }
-                channels[channel][frame] = Float(chord * 0.12 * slowPulse * edgeFade)
+                let melodyIndex = Int(time / 3.0) % melody.count
+                let melodyTime = time.truncatingRemainder(dividingBy: 3.0)
+                let melodyEnvelope = exp(-melodyTime * 1.25)
+                let melodyTone = (
+                    sin(2 * .pi * melody[melodyIndex] * time + stereoOffset)
+                    + (0.22 * sin(4 * .pi * melody[melodyIndex] * time + stereoOffset))
+                ) * melodyEnvelope
+                let sample = (chord * 0.20 * slowPulse) + (melodyTone * 0.075)
+                channels[channel][frame] = Float(sample * edgeFade)
             }
         }
 
@@ -137,12 +180,12 @@ struct PomodoroTimerView: View {
         return elapsed % 8 < 4 ? "Breathe … in" : "Breathe … out"
     }
 
-    private var spokenBreathingCue: String? {
+    private var spokenBreathingDirection: String? {
         switch breathingCue {
         case "Breathe … in":
-            "Breathe... in."
+            "in"
         case "Breathe … out":
-            "Breathe... out."
+            "out"
         default:
             nil
         }
@@ -286,7 +329,7 @@ struct PomodoroTimerView: View {
                 catIsInhaling = false
                 audioGuide.stopAll()
                 if remainingSeconds == 0, audioInstructionsEnabled {
-                    audioGuide.speak("Nice work. Your break with Mochi is complete.")
+                    audioGuide.speakCompletion()
                 }
                 return
             }
@@ -302,21 +345,21 @@ struct PomodoroTimerView: View {
             guard mode == .shortBreak,
                   breakHasStarted,
                   audioInstructionsEnabled,
-                  let instruction = spokenBreathingCue else {
+                  let direction = spokenBreathingDirection else {
                 if !isRunning, remainingSeconds != 0 {
                     audioGuide.stopAll()
                 }
                 return
             }
-            audioGuide.speak(instruction)
+            audioGuide.speakBreathing(direction: direction)
         }
         .onChange(of: audioInstructionsEnabled) { _, enabled in
-            guard enabled, isRunning, let instruction = spokenBreathingCue else {
+            guard enabled, isRunning, let direction = spokenBreathingDirection else {
                 audioGuide.stopAll()
                 return
             }
             audioGuide.startAmbience()
-            audioGuide.speak(instruction)
+            audioGuide.speakBreathing(direction: direction)
         }
         .onReceive(timer) { _ in
             guard isRunning else { return }

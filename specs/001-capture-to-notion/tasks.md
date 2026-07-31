@@ -528,3 +528,10 @@ Environment-limited release checks:
 - [x] T142 Add a low-volume generated ambient music bed controlled by the existing audio toggle
   and break lifecycle per FR-066
 - [x] T143 Rebuild, test, package, and verify the refined break audio controls in Medium mode
+
+## Phase 41: Natural voice and audible ambience
+
+- [x] T144 Prefer Premium or Enhanced local English voices, remove artificial pitch processing,
+  lower speech volume, and split each breathing cue around a natural pause per FR-067
+- [x] T145 Rebalance the locally generated ambient bed so it remains audible below speech per FR-067
+- [x] T146 Rebuild, test, package, and verify the natural voice and ambient playback lifecycle

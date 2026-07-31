@@ -353,6 +353,9 @@ Bookmark manually and confirm both appear in the correct Notion database after r
 - **FR-066**: Mochi's spoken guidance MUST use a quiet, slow, relaxing voice with deliberate pauses
   in “Breathe … in” and “Breathe … out.” An unobtrusive ambient music bed MUST play during an active
   Break, share the audio toggle, and stop on pause, reset, Focus, completion, mute, or dismissal.
+- **FR-067**: Spoken breathing guidance MUST prefer a locally installed Premium or Enhanced English
+  voice, use a natural unshifted pitch at low volume, and separate “Breathe” from “in” or “out” with
+  a deliberate pause. The ambient bed MUST remain clearly audible beneath the spoken cue.
 
 ### Key Entities
 
