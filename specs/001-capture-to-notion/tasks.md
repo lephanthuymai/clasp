@@ -432,3 +432,13 @@ Environment-limited release checks:
 - [x] T106 Modernize capture, manual entry, Ask Codex, settings, and recent-capture surfaces
   without changing their model actions, keyboard shortcuts, or validation behavior
 - [x] T107 Rebuild, test, package, and visually verify the complete refreshed interface
+
+## Phase 29: Honest connection state and Keychain recovery
+
+- [x] T108 Make every library open and Refresh attempt credential-backed loading instead of
+  short-circuiting on a stale in-memory token flag per FR-055
+- [x] T109 Distinguish Notion mapping, Keychain-required, syncing, and fully synced states in
+  the main library and Settings
+- [x] T110 Remove duplicate app-delegate, window-coordinator, and SwiftUI lifecycle loads,
+  coalesce in-flight library refreshes, and isolate explicit Settings credential checks
+- [x] T111 Rebuild, test, package, and verify denied and allowed Keychain recovery paths

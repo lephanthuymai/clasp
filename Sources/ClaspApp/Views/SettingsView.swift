@@ -52,6 +52,9 @@ struct SettingsView: View {
         .frame(minHeight: 720)
         .task {
             await model.load()
+            if !model.hasToken {
+                await model.refreshCredentialState()
+            }
             parentPageID = model.destinations?.parentPageID ?? parentPageID
             codexWorkspacePath = model.codexWorkspacePath
         }
@@ -244,7 +247,7 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var destinationStatus: some View {
-        if let destinations = model.destinations {
+        if let destinations = model.destinations, model.hasToken {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
@@ -259,6 +262,24 @@ struct SettingsView: View {
             }
             .padding(12)
             .background(.green.opacity(0.075), in: RoundedRectangle(cornerRadius: 12))
+        } else if let destinations = model.destinations {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "key.fill")
+                    .foregroundStyle(.orange)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Keychain access required")
+                        .font(.callout.weight(.semibold))
+                    Text(
+                        "\(destinations.tasks.dataSourceName) and \(destinations.bookmarks.dataSourceName) are mapped, but Clasp cannot read the saved token. Allow Keychain access or paste the token again."
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+            }
+            .padding(12)
+            .background(.orange.opacity(0.075), in: RoundedRectangle(cornerRadius: 12))
         } else {
             HStack(spacing: 10) {
                 Image(systemName: "exclamationmark.circle.fill")

@@ -303,6 +303,12 @@ Bookmark manually and confirm both appear in the correct Notion database after r
   prominent primary actions, legible state badges, consistent branded surfaces, and unambiguous
   interactive controls. This visual refresh MUST preserve all existing behavior and keyboard
   shortcuts.
+- **FR-055**: The main library MUST attempt a real credential-backed Notion load whenever it
+  opens or the user invokes Refresh, even when an earlier Keychain check failed. A missing,
+  denied, or inaccessible Keychain credential MUST produce an actionable visible status and
+  MUST NOT be represented as a successful Notion sync. Settings MUST distinguish a saved
+  database mapping from a fully usable credential-backed connection. One user-visible action
+  MUST NOT issue overlapping or redundant reads of the same Keychain credential.
 
 ### Key Entities
 

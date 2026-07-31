@@ -67,8 +67,11 @@ final class AppModel: ObservableObject {
         let document = try await repository.load()
         captures = document.captures.sorted { $0.createdAt > $1.createdAt }
         destinations = document.destinations
-        hasToken = await settingsService.hasToken()
         accessibilityGranted = AccessibilitySelectionReader.hasPermission
+    }
+
+    func refreshCredentialState() async {
+        hasToken = await settingsService.hasToken()
     }
 
     func confirm(_ draft: CaptureDraft) async -> Bool {
@@ -98,19 +101,32 @@ final class AppModel: ObservableObject {
     }
 
     func loadLibrary() async {
-        guard destinations != nil, hasToken else {
+        guard destinations != nil else {
             notionTasks = []
             notionBookmarks = []
+            statusMessage = ClaspError.destinationNotConfigured.localizedDescription
             return
         }
+        guard !isLibraryLoading else { return }
         isLibraryLoading = true
         defer { isLibraryLoading = false }
         do {
             let result = try await libraryService.loadAll()
             notionTasks = result.tasks
             notionBookmarks = result.bookmarks
+            hasToken = true
             statusMessage = nil
         } catch {
+            if let claspError = error as? ClaspError {
+                switch claspError {
+                case .credentialNotFound, .keychainFailure:
+                    hasToken = false
+                    notionTasks = []
+                    notionBookmarks = []
+                default:
+                    break
+                }
+            }
             statusMessage = safeMessage(for: error)
         }
     }
@@ -349,6 +365,7 @@ final class AppModel: ObservableObject {
                 )
             }
             try await refresh()
+            hasToken = true
             statusMessage = "Created or connected \(provisioned.tasks.dataSourceName) and \(provisioned.bookmarks.dataSourceName)."
             return true
         } catch {

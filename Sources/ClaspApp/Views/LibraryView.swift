@@ -98,10 +98,6 @@ struct LibraryView: View {
                 "“\(displayTitle(for: item))” will be removed from Clasp and moved to Notion Trash, where it can be restored."
             )
         }
-        .task {
-            await model.load()
-            await model.loadLibrary()
-        }
     }
 
     private var libraryHeader: some View {
@@ -161,15 +157,7 @@ struct LibraryView: View {
             )
             Spacer()
 
-            Label(
-                model.isLibraryLoading ? "Syncing…" : "Synced with Notion",
-                systemImage: model.isLibraryLoading
-                    ? "arrow.triangle.2.circlepath"
-                    : "checkmark.circle.fill"
-            )
-            .font(.caption.weight(.medium))
-            .foregroundStyle(model.isLibraryLoading ? Color.secondary : Color.green)
-            .padding(.trailing, 6)
+            connectionBadge
         }
         .padding(5)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
@@ -177,6 +165,26 @@ struct LibraryView: View {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .stroke(Color.primary.opacity(0.065), lineWidth: 1)
         }
+    }
+
+    private var connectionBadge: some View {
+        Group {
+            if model.isLibraryLoading {
+                Label("Syncing…", systemImage: "arrow.triangle.2.circlepath")
+                    .foregroundStyle(.secondary)
+            } else if model.destinations == nil {
+                Label("Notion not configured", systemImage: "exclamationmark.circle.fill")
+                    .foregroundStyle(.orange)
+            } else if !model.hasToken {
+                Label("Keychain access required", systemImage: "key.fill")
+                    .foregroundStyle(.orange)
+            } else {
+                Label("Synced with Notion", systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+            }
+        }
+        .font(.caption.weight(.medium))
+        .padding(.trailing, 6)
     }
 
     private func libraryTab(
