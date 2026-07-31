@@ -8,6 +8,7 @@ private final class BreakAudioGuide: ObservableObject {
     private let synthesizer = AVSpeechSynthesizer()
     private let audioEngine = AVAudioEngine()
     private let ambiencePlayer = AVAudioPlayerNode()
+    private let ambienceReverb = AVAudioUnitReverb()
     private let calmVoice: AVSpeechSynthesisVoice?
     private var ambienceBuffer: AVAudioPCMBuffer?
     private var speechTask: Task<Void, Never>?
@@ -15,8 +16,12 @@ private final class BreakAudioGuide: ObservableObject {
     init() {
         calmVoice = Self.bestAvailableCalmVoice()
         audioEngine.attach(ambiencePlayer)
+        audioEngine.attach(ambienceReverb)
         let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 2)!
-        audioEngine.connect(ambiencePlayer, to: audioEngine.mainMixerNode, format: format)
+        ambienceReverb.loadFactoryPreset(.largeHall2)
+        ambienceReverb.wetDryMix = 48
+        audioEngine.connect(ambiencePlayer, to: ambienceReverb, format: format)
+        audioEngine.connect(ambienceReverb, to: audioEngine.mainMixerNode, format: format)
         ambienceBuffer = Self.makeAmbientBuffer(format: format)
         ambiencePlayer.volume = 0.30
     }
@@ -88,7 +93,7 @@ private final class BreakAudioGuide: ObservableObject {
     }
 
     private static func makeAmbientBuffer(format: AVAudioFormat) -> AVAudioPCMBuffer? {
-        let duration = 12.0
+        let duration = 24.0
         let frameCount = AVAudioFrameCount(format.sampleRate * duration)
         guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount),
               let channels = buffer.floatChannelData else {
@@ -96,29 +101,33 @@ private final class BreakAudioGuide: ObservableObject {
         }
         buffer.frameLength = frameCount
 
-        let frequencies = [130.81, 164.81, 196.00, 246.94]
-        let melody = [261.63, 329.63, 392.00, 493.88]
-        let fadeFrames = Int(format.sampleRate * 0.8)
+        // A spacious original soundscape centered on 528 Hz and its lower harmonics.
+        let droneFrequencies = [66.0, 132.0, 198.0, 264.0, 528.0]
+        let droneWeights = [0.42, 0.34, 0.20, 0.12, 0.025]
+        let chimeFrequencies = [264.0, 396.0, 528.0, 330.0]
+        let fadeFrames = Int(format.sampleRate * 1.5)
 
         for frame in 0 ..< Int(frameCount) {
             let time = Double(frame) / format.sampleRate
-            let slowPulse = 0.78 + (0.22 * sin(2 * .pi * time / 8.0))
+            let slowPulse = 0.76
+                + (0.16 * sin(2 * .pi * time / 12.0))
+                + (0.08 * sin(2 * .pi * time / 20.0))
             let edgeFade = min(1.0, Double(min(frame, Int(frameCount) - frame - 1)) / Double(fadeFrames))
 
             for channel in 0 ..< Int(format.channelCount) {
                 let stereoOffset = channel == 0 ? 0.0 : 0.035
-                let chord = frequencies.enumerated().reduce(0.0) { value, note in
-                    let weight = 1.0 / Double(note.offset + 2)
-                    return value + (sin(2 * .pi * note.element * time + stereoOffset) * weight)
+                let drone = droneFrequencies.enumerated().reduce(0.0) { value, note in
+                    value + (sin(2 * .pi * note.element * time + stereoOffset)
+                        * droneWeights[note.offset])
                 }
-                let melodyIndex = Int(time / 3.0) % melody.count
-                let melodyTime = time.truncatingRemainder(dividingBy: 3.0)
-                let melodyEnvelope = exp(-melodyTime * 1.25)
-                let melodyTone = (
-                    sin(2 * .pi * melody[melodyIndex] * time + stereoOffset)
-                    + (0.22 * sin(4 * .pi * melody[melodyIndex] * time + stereoOffset))
-                ) * melodyEnvelope
-                let sample = (chord * 0.20 * slowPulse) + (melodyTone * 0.075)
+                let chimeIndex = Int(time / 6.0) % chimeFrequencies.count
+                let chimeTime = time.truncatingRemainder(dividingBy: 6.0)
+                let chimeEnvelope = exp(-chimeTime * 0.85)
+                let chime = (
+                    sin(2 * .pi * chimeFrequencies[chimeIndex] * time + stereoOffset)
+                    + (0.16 * sin(4 * .pi * chimeFrequencies[chimeIndex] * time + stereoOffset))
+                ) * chimeEnvelope
+                let sample = (drone * 0.22 * slowPulse) + (chime * 0.045)
                 channels[channel][frame] = Float(sample * edgeFade)
             }
         }

@@ -356,6 +356,11 @@ Bookmark manually and confirm both appear in the correct Notion database after r
 - **FR-067**: Spoken breathing guidance MUST prefer a locally installed Premium or Enhanced English
   voice, use a natural unshifted pitch at low volume, and separate “Breathe” from “in” or “out” with
   a deliberate pause. The ambient bed MUST remain clearly audible beneath the spoken cue.
+- **FR-068**: Break music MUST be an original, spacious meditation soundscape centered on 528 Hz,
+  with warm lower harmonics, slow breath-like modulation, sparse chimes, and gentle reverb. It MAY
+  be mood-informed by a user-provided reference but MUST NOT copy or distribute that recording.
+- **FR-069**: Mini, Medium, and Maximum MUST appear as direct, individually labeled commands in the
+  Clasp menu-bar menu rather than being hidden inside a submenu.
 
 ### Key Entities
 

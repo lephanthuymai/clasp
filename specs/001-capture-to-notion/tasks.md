@@ -535,3 +535,10 @@ Environment-limited release checks:
   lower speech volume, and split each breathing cue around a natural pause per FR-067
 - [x] T145 Rebalance the locally generated ambient bed so it remains audible below speech per FR-067
 - [x] T146 Rebuild, test, package, and verify the natural voice and ambient playback lifecycle
+
+## Phase 42: 528 Hz soundscape and visible window modes
+
+- [x] T147 Replace the simple ambient chord with an original 528 Hz-centered meditation soundscape
+  using low harmonics, slow modulation, sparse chimes, and reverb per FR-068
+- [x] T148 Expose Mini, Medium, and Maximum directly in the menu-bar menu per FR-069
+- [x] T149 Rebuild, test, package, and verify sound playback plus all three menu-bar mode commands

@@ -212,19 +212,16 @@ private struct ClaspMenuView: View {
         }
         .keyboardShortcut("o")
 
-        Menu("Window Mode") {
-            ForEach(ClaspPresentationMode.allCases) { mode in
-                Button {
-                    onPresentationMode(mode)
-                } label: {
-                    Label {
-                        VStack(alignment: .leading) {
-                            Text(mode.title)
-                            Text(mode.helpText)
-                        }
-                    } icon: {
-                        Image(systemName: model.presentationMode == mode ? "checkmark.circle.fill" : "circle")
-                    }
+        Divider()
+        Text("Window Mode")
+        ForEach(ClaspPresentationMode.allCases) { mode in
+            Button {
+                onPresentationMode(mode)
+            } label: {
+                Label {
+                    Text("\(mode.title) — \(mode.helpText)")
+                } icon: {
+                    Image(systemName: model.presentationMode == mode ? "checkmark.circle.fill" : "circle")
                 }
             }
         }
