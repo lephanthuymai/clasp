@@ -498,3 +498,9 @@ Environment-limited release checks:
 - [x] T131 Add a selectable 5-minute Break mode that pauses and resets when switching between
   Focus and Break per FR-061
 - [x] T132 Rebuild, package, and visually verify Focus/Break selection in Medium mode
+
+## Phase 37: Refined Pomodoro colors
+
+- [x] T133 Replace the blue system segmented control with a neutral accessible Focus/Break
+  selector and keep Start/Pause consistently branded per FR-063
+- [x] T134 Rebuild, package, and visually verify both selected states in Medium mode

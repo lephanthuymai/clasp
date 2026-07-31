@@ -51,6 +51,7 @@ struct PomodoroTimerView: View {
                 }
                 .labelsHidden()
                 .pickerStyle(.segmented)
+                .tint(Color.secondary.opacity(0.38))
                 .frame(width: 132)
                 .accessibilityLabel("Pomodoro mode")
 
@@ -74,7 +75,7 @@ struct PomodoroTimerView: View {
                     )
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(tint)
+                .tint(ClaspBrand.accent)
                 .controlSize(.small)
 
                 Button {

@@ -340,6 +340,8 @@ Bookmark manually and confirm both appear in the correct Notion database after r
 - **FR-062**: The Tasks table MUST order incomplete tasks first by Priority in High, Medium, Low,
   and unset order, then by Due Date ascending within each priority. Tasks without a Due Date MUST
   follow dated tasks of the same priority, and exact ties MUST retain their source order.
+- **FR-063**: The Pomodoro Focus/Break selector MUST use a subtle neutral selection treatment,
+  and its Start/Pause action MUST retain the same Clasp accent color in both timer modes.
 
 ### Key Entities
 
