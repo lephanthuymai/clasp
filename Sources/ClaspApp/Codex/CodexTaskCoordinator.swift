@@ -51,6 +51,7 @@ final class CodexTaskCoordinator {
         var nextRequestID = 1
         var pending: [Int: CheckedContinuation<Data, Error>] = [:]
         var reachedTerminalState = false
+        var declaredOutcome: CodexTaskOutcome?
         let reportsProgress: Bool
 
         init(
@@ -148,7 +149,10 @@ final class CodexTaskCoordinator {
                     "threadId": threadID,
                     "input": [[
                         "type": "text",
-                        "text": prompt(for: item, instruction: instruction)
+                        "text": CodexTaskHandoff.prompt(
+                            for: item,
+                            instruction: instruction
+                        )
                     ]]
                 ],
                 session: session
@@ -354,6 +358,14 @@ final class CodexTaskCoordinator {
         }
 
         switch method {
+        case "item/completed":
+            guard let item = params["item"] as? [String: Any],
+                  item["type"] as? String == "agentMessage",
+                  let text = item["text"] as? String
+            else {
+                return
+            }
+            session.declaredOutcome = CodexTaskOutcome.declared(in: text)
         case "thread/status/changed":
             guard let status = params["status"] as? [String: Any],
                   status["type"] as? String == "active",
@@ -372,7 +384,10 @@ final class CodexTaskCoordinator {
                 return
             }
             session.reachedTerminalState = true
-            emit(status == "completed" ? .completed : .failed, for: session)
+            let progress = status == "completed"
+                ? session.declaredOutcome?.progress ?? .waiting
+                : .failed
+            emit(progress, for: session)
             stop(session)
         case "error":
             session.reachedTerminalState = true
@@ -433,29 +448,6 @@ final class CodexTaskCoordinator {
     private func conversationTitle(for item: NotionListItem) -> String {
         let title = item.title.trimmingCharacters(in: .whitespacesAndNewlines)
         return "[\(item.taskID)] \(title.isEmpty ? "Untitled Task" : title)"
-    }
-
-    private func prompt(for item: NotionListItem, instruction: String) -> String {
-        var sections = [
-            "Task ID: \(item.taskID)",
-            "Task: \(item.title.isEmpty ? "Untitled Task" : item.title)"
-        ]
-        if !item.notes.isEmpty { sections.append("Notes: \(item.notes)") }
-        if !item.source.isEmpty { sections.append("Source: \(item.source)") }
-        if let priority = item.priority {
-            sections.append("Priority: \(priority.displayName)")
-        }
-        if let dueDate = item.dueDate {
-            sections.append("Due date: \(dueDate.formatted(.iso8601.year().month().day()))")
-        }
-        let trimmedInstruction = instruction.trimmingCharacters(
-            in: .whitespacesAndNewlines
-        )
-        if !trimmedInstruction.isEmpty {
-            sections.append("Additional instruction: \(trimmedInstruction)")
-        }
-        sections.append("Work on this task. Ask for clarification when required.")
-        return sections.joined(separator: "\n")
     }
 
     private func save(threadID: String, for pageID: String) {

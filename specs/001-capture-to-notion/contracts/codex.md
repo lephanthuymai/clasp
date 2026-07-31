@@ -13,6 +13,7 @@ initializes the JSON-RPC connection, creates a persistent thread rooted at the C
 sets its exact name to `[CLASP-XXXXXXXX] <Task Name>`, and starts one turn containing:
 
 - Task ID and Name
+- the canonical Notion Task page link when available
 - Notes, Source, Priority, and Due Date when present
 - the optional user instruction when non-empty
 
@@ -39,10 +40,17 @@ Clasp is the writer of lifecycle state to Notion:
 | No handoff | Not Started |
 | Turn started or active | Working |
 | Waiting on approval or user input | Waiting |
-| Turn completed successfully | Completed |
+| Turn ended without an explicit task-complete declaration | Waiting |
+| Final response explicitly declares all requested work complete | Completed |
 | Startup, protocol, or turn failure | Failed |
 
-Every remote update is confirmed before the main-table projection changes. The Notion
+Codex app-server's `turn/completed` event means only that a response turn ended; it is not proof
+that the requested Task is finished. The handoff therefore requires the final agent response to
+declare `COMPLETED`, `WAITING`, or `FAILED` with Clasp's hidden status marker. A successful turn
+without a valid marker becomes Waiting. The conversation is also instructed never to change the
+Task's independent `Done` checkbox unless the user explicitly asks for that action.
+
+Every remote Progress update is confirmed before the main-table projection changes. The Notion
 integration token is never passed to Codex or written to the Codex conversation.
 
 ## Local association

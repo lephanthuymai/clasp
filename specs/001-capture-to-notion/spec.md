@@ -146,8 +146,9 @@ Bookmark manually and confirm both appear in the correct Notion database after r
    after Notion accepts the update.
 10. **Given** a Task is visible, **When** the user chooses Ask Codex, optionally adds an
     instruction, and confirms, **Then** Clasp creates and opens a persistent Codex conversation
-    whose title starts with that Task's stable Clasp Task ID, starts the work, and reflects its
-    lifecycle through the Task's Progress property in Notion and the main table.
+    whose title starts with that Task's stable Clasp Task ID, includes a link to its Notion page,
+    starts the work, and reflects its lifecycle through the Task's Progress property in Notion
+    and the main table.
 11. **Given** the main library is open, **When** a Task or Bookmark created through either
     Clasp entry flow is confirmed by Notion, **Then** the corresponding table refreshes
     automatically without requiring the user to press Refresh.
@@ -274,8 +275,11 @@ Bookmark manually and confirm both appear in the correct Notion database after r
   the created Codex conversation title to `[<Task ID>] <Task Name>`.
 - **FR-047**: Clasp MUST start the Codex turn only after explicit confirmation, update Progress
   to `Working` while the turn is active, `Waiting` when Codex requires user interaction,
-  `Completed` when the turn succeeds, and `Failed` when startup or execution fails. Clasp MUST
-  update the visible row only after Notion accepts each Progress change.
+  `Completed` only when Codex explicitly declares the requested work genuinely finished, and
+  `Failed` when startup or execution fails. A successful response turn without that completion
+  declaration MUST become `Waiting`, because ending a turn does not complete the Task. Clasp MUST
+  update the visible row only after Notion accepts each Progress change and MUST NOT alter the
+  independent `Done` checkbox as part of Codex Progress handling.
 - **FR-048**: Clasp MUST keep a newly created Codex conversation owned by its app-server worker
   while the turn is active and MUST NOT open its desktop route during that period. The Task row
   MUST show an explicit non-clickable Working state. After the turn completes, fails, or requires
@@ -365,6 +369,8 @@ Bookmark manually and confirm both appear in the correct Notion database after r
   breathing instructions, alternating inhale/exhale audio, or a completion beep. This requirement
   supersedes the voice and alternating-cue portions of FR-064 through FR-067; Mochi's animation,
   visual paused/completion states, and the music toggle MUST remain.
+- **FR-071**: The initial Ask Codex message MUST include the canonical Notion Task page URL when
+  available and MUST instruct Codex not to change `Done` unless the user explicitly requests it.
 
 ### Key Entities
 
