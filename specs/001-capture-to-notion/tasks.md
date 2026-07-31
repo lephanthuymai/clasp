@@ -504,3 +504,11 @@ Environment-limited release checks:
 - [x] T133 Replace the blue system segmented control with a neutral accessible Focus/Break
   selector and keep Start/Pause consistently branded per FR-063
 - [x] T134 Rebuild, package, and visually verify both selected states in Medium mode
+
+## Phase 38: Guided breathing break companion
+
+- [x] T135 Generate, extract, optimize, and package an original transparent anime breathing-cat
+  asset per FR-064
+- [x] T136 Show the cat only after Break starts, with animated inhale/exhale, pause, completion,
+  Reset, and Focus behavior per FR-064
+- [x] T137 Rebuild, package, and visually verify the guided breathing companion in Medium mode

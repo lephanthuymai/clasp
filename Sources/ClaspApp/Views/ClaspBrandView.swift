@@ -15,6 +15,16 @@ enum ClaspBrand {
         return NSImage(contentsOf: url)
     }()
 
+    static let breakBreathingCat: NSImage? = {
+        guard let url = Bundle.main.url(
+            forResource: "BreakBreathingCat",
+            withExtension: "png"
+        ) else {
+            return nil
+        }
+        return NSImage(contentsOf: url)
+    }()
+
     static let menuBarIcon: NSImage = {
         let size = NSSize(width: 18, height: 18)
         let image = NSImage(size: size, flipped: false) { rect in

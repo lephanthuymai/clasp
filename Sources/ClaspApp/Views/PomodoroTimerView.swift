@@ -27,6 +27,7 @@ struct PomodoroTimerView: View {
     @State private var mode: TimerMode = .focus
     @State private var remainingSeconds = TimerMode.focus.duration
     @State private var isRunning = false
+    @State private var catIsInhaling = false
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var timeText: String {
@@ -39,6 +40,17 @@ struct PomodoroTimerView: View {
 
     private var tint: Color {
         mode == .focus ? ClaspBrand.accent : .green
+    }
+
+    private var breakHasStarted: Bool {
+        mode == .shortBreak && (isRunning || remainingSeconds < mode.duration)
+    }
+
+    private var breathingCue: String {
+        if remainingSeconds == 0 { return "Nice work — break complete" }
+        if !isRunning { return "Breathing paused" }
+        let elapsed = mode.duration - remainingSeconds
+        return elapsed % 8 < 4 ? "Breathe in slowly" : "Breathe out slowly"
     }
 
     var body: some View {
@@ -100,6 +112,49 @@ struct PomodoroTimerView: View {
                 }
             }
             .frame(height: 4)
+
+            if breakHasStarted {
+                Divider()
+                    .opacity(0.45)
+
+                HStack(spacing: 14) {
+                    Group {
+                        if let cat = ClaspBrand.breakBreathingCat {
+                            Image(nsImage: cat)
+                                .resizable()
+                                .interpolation(.high)
+                                .scaledToFit()
+                        } else {
+                            Image(systemName: "cat")
+                                .resizable()
+                                .scaledToFit()
+                                .padding(18)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(width: 104, height: 104)
+                    .scaleEffect(catIsInhaling ? 1.035 : 0.965)
+                    .accessibilityHidden(true)
+
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Deep breath break")
+                            .font(.headline)
+                        Text(breathingCue)
+                            .font(.callout.weight(.medium))
+                            .foregroundStyle(.green)
+                            .contentTransition(.numericText())
+                        Text("Relax your shoulders and breathe gently with the cat.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    Spacer(minLength: 0)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .accessibilityElement(children: .combine)
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -111,6 +166,16 @@ struct PomodoroTimerView: View {
         .onChange(of: mode) { _, newMode in
             isRunning = false
             remainingSeconds = newMode.duration
+        }
+        .onChange(of: isRunning) { _, running in
+            guard running, mode == .shortBreak else {
+                catIsInhaling = false
+                return
+            }
+            catIsInhaling = false
+            withAnimation(.easeInOut(duration: 4).repeatForever(autoreverses: true)) {
+                catIsInhaling = true
+            }
         }
         .onReceive(timer) { _ in
             guard isRunning else { return }

@@ -342,6 +342,10 @@ Bookmark manually and confirm both appear in the correct Notion database after r
   follow dated tasks of the same priority, and exact ties MUST retain their source order.
 - **FR-063**: The Pomodoro Focus/Break selector MUST use a subtle neutral selection treatment,
   and its Start/Pause action MUST retain the same Clasp accent color in both timer modes.
+- **FR-064**: Starting a Break MUST reveal an original cute anime cat demonstrating calm deep
+  breathing, accompanied by alternating inhale and exhale guidance synchronized to a gentle
+  animation. Pausing MUST retain the companion with a paused cue, Reset or Focus MUST hide it,
+  and completion MUST retain it with positive feedback.
 
 ### Key Entities
 
