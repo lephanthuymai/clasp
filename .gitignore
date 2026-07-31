@@ -1,0 +1,26 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+Packages/
+Package.resolved
+dist/
+
+# Xcode
+DerivedData/
+*.xcuserstate
+*.xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# macOS and editors
+.DS_Store
+*.swp
+*.tmp
+.idea/
+.vscode/
+
+# Credentials and local runtime data
+.env
+.env.*
+*.notion-token
+clasp-store.json
+clasp-store.json.backup
