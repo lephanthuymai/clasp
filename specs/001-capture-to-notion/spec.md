@@ -361,6 +361,10 @@ Bookmark manually and confirm both appear in the correct Notion database after r
   be mood-informed by a user-provided reference but MUST NOT copy or distribute that recording.
 - **FR-069**: Mini, Medium, and Maximum MUST appear as direct, individually labeled commands in the
   Clasp menu-bar menu rather than being hidden inside a submenu.
+- **FR-070**: Break mode MUST use only the original ambient music for audio. It MUST NOT play spoken
+  breathing instructions, alternating inhale/exhale audio, or a completion beep. This requirement
+  supersedes the voice and alternating-cue portions of FR-064 through FR-067; Mochi's animation,
+  visual paused/completion states, and the music toggle MUST remain.
 
 ### Key Entities
 

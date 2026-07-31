@@ -542,3 +542,9 @@ Environment-limited release checks:
   using low harmonics, slow modulation, sparse chimes, and reverb per FR-068
 - [x] T148 Expose Mini, Medium, and Maximum directly in the menu-bar menu per FR-069
 - [x] T149 Rebuild, test, package, and verify sound playback plus all three menu-bar mode commands
+
+## Phase 43: Music-only breaks
+
+- [x] T150 Remove spoken breathing prompts, alternating cue text, speech synthesis, and the
+  completion beep while preserving Mochi, music, pause, and completion behavior per FR-070
+- [x] T151 Rebuild, test, package, and verify music-only Break behavior in Medium mode
