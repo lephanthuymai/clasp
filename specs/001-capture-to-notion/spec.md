@@ -333,8 +333,10 @@ Bookmark manually and confirm both appear in the correct Notion database after r
   builds MUST accept it from the ignored `.env` variable `CLASP_DEFAULT_CODEX_WORKSPACE_PATH`,
   package it for Finder-launched app bundles, and fall back to dynamic discovery or user folder
   selection when it is absent. The repository MUST include only a generic `.env.example`.
-- **FR-061**: The main library MUST show a 25-minute Pomodoro timer above the Tasks and Bookmarks
-  tabs with visible remaining time, start, pause/resume, reset, progress, and completion feedback.
+- **FR-061**: The main library MUST show a Pomodoro timer above the Tasks and Bookmarks tabs with
+  selectable 25-minute Focus and 5-minute Break modes, visible remaining time, start,
+  pause/resume, reset, progress, and completion feedback. Switching modes MUST pause and reset
+  the timer to the selected duration.
 - **FR-062**: The Tasks table MUST order incomplete tasks first by Priority in High, Medium, Low,
   and unset order, then by Due Date ascending within each priority. Tasks without a Due Date MUST
   follow dated tasks of the same priority, and exact ties MUST retain their source order.

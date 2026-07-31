@@ -492,3 +492,9 @@ Environment-limited release checks:
   per FR-062
 - [x] T130 Rebuild, package, and visually verify the timer and sorted task table in Medium and
   Maximum modes
+
+## Phase 36: Pomodoro short break
+
+- [x] T131 Add a selectable 5-minute Break mode that pauses and resets when switching between
+  Focus and Break per FR-061
+- [x] T132 Rebuild, package, and visually verify Focus/Break selection in Medium mode

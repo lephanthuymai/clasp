@@ -3,9 +3,29 @@ import Combine
 import SwiftUI
 
 struct PomodoroTimerView: View {
-    private static let focusDuration = 25 * 60
+    private enum TimerMode: String, CaseIterable, Identifiable {
+        case focus
+        case shortBreak
 
-    @State private var remainingSeconds = focusDuration
+        var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .focus: "Focus"
+            case .shortBreak: "Break"
+            }
+        }
+
+        var duration: Int {
+            switch self {
+            case .focus: 25 * 60
+            case .shortBreak: 5 * 60
+            }
+        }
+    }
+
+    @State private var mode: TimerMode = .focus
+    @State private var remainingSeconds = TimerMode.focus.duration
     @State private var isRunning = false
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
@@ -14,27 +34,37 @@ struct PomodoroTimerView: View {
     }
 
     private var progress: Double {
-        1 - Double(remainingSeconds) / Double(Self.focusDuration)
+        1 - Double(remainingSeconds) / Double(mode.duration)
+    }
+
+    private var tint: Color {
+        mode == .focus ? ClaspBrand.accent : .green
     }
 
     var body: some View {
         VStack(spacing: 8) {
             HStack(spacing: 10) {
-                Label("Focus", systemImage: "timer")
-                    .font(.callout.weight(.semibold))
-                    .foregroundStyle(ClaspBrand.accent)
+                Picker("Timer mode", selection: $mode) {
+                    ForEach(TimerMode.allCases) { option in
+                        Text(option.title).tag(option)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.segmented)
+                .frame(width: 132)
+                .accessibilityLabel("Pomodoro mode")
 
                 Text(timeText)
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
                     .monospacedDigit()
                     .contentTransition(.numericText())
-                    .accessibilityLabel("Pomodoro time remaining, \(timeText)")
+                    .accessibilityLabel("\(mode.title) time remaining, \(timeText)")
 
                 Spacer(minLength: 8)
 
                 Button {
                     if remainingSeconds == 0 {
-                        remainingSeconds = Self.focusDuration
+                        remainingSeconds = mode.duration
                     }
                     isRunning.toggle()
                 } label: {
@@ -44,12 +74,12 @@ struct PomodoroTimerView: View {
                     )
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(ClaspBrand.accent)
+                .tint(tint)
                 .controlSize(.small)
 
                 Button {
                     isRunning = false
-                    remainingSeconds = Self.focusDuration
+                    remainingSeconds = mode.duration
                 } label: {
                     Image(systemName: "arrow.counterclockwise")
                 }
@@ -64,7 +94,7 @@ struct PomodoroTimerView: View {
                     Capsule()
                         .fill(Color.primary.opacity(0.07))
                     Capsule()
-                        .fill(ClaspBrand.accent)
+                        .fill(tint)
                         .frame(width: geometry.size.width * progress)
                 }
             }
@@ -76,6 +106,10 @@ struct PomodoroTimerView: View {
         .overlay {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .stroke(Color.primary.opacity(0.065), lineWidth: 1)
+        }
+        .onChange(of: mode) { _, newMode in
+            isRunning = false
+            remainingSeconds = newMode.duration
         }
         .onReceive(timer) { _ in
             guard isRunning else { return }
