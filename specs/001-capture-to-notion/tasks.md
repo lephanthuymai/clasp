@@ -483,3 +483,12 @@ Environment-limited release checks:
   process-environment and user-selected overrides
 - [x] T127 Remove the private project name from current tracked code and documentation, rebuild,
   test, and verify the packaged configuration without exposing its value
+
+## Phase 35: Pomodoro and task ordering
+
+- [x] T128 Add a responsive 25-minute Pomodoro control above the library tabs with start,
+  pause/resume, reset, progress, accessibility labels, and completion feedback per FR-061
+- [x] T129 Add deterministic Priority and Due Date ordering for Tasks with regression coverage
+  per FR-062
+- [x] T130 Rebuild, package, and visually verify the timer and sorted task table in Medium and
+  Maximum modes

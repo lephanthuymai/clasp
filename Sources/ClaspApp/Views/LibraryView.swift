@@ -15,13 +15,16 @@ struct LibraryView: View {
 
             VStack(spacing: 16) {
                 libraryHeader
+                PomodoroTimerView()
                 libraryNavigation
 
                 Group {
                     switch selectedType {
                     case .task:
                         itemList(
-                            model.notionTasks,
+                            NotionListItemOrdering.tasksByPriorityAndDueDate(
+                                model.notionTasks
+                            ),
                             type: .task,
                             emptyTitle: "No tasks yet",
                             emptyDescription: "Create a task here or capture text from any app."
