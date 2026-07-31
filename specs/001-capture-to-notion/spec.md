@@ -309,6 +309,11 @@ Bookmark manually and confirm both appear in the correct Notion database after r
   MUST NOT be represented as a successful Notion sync. Settings MUST distinguish a saved
   database mapping from a fully usable credential-backed connection. One user-visible action
   MUST NOT issue overlapping or redundant reads of the same Keychain credential.
+- **FR-056**: Ask Codex MUST let the user choose the local Codex project folder for each Task.
+  Clasp MUST dynamically discover valid project folders from persisted Codex thread metadata,
+  keep the configured workspace (initially `~/Data/work/truetest-pm-agenthub`) first and selected
+  by default, deduplicate and ignore unavailable folders, and provide a folder chooser for valid
+  projects that have no existing Codex conversation. Project choices MUST NOT be hard-coded.
 
 ### Key Entities
 

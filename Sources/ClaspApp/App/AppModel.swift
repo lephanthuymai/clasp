@@ -15,6 +15,8 @@ final class AppModel: ObservableObject {
     @Published private(set) var deletingItemIDs: Set<String> = []
     @Published private(set) var updatingTaskFieldKeys: Set<String> = []
     @Published private(set) var askingCodexTaskIDs: Set<String> = []
+    @Published private(set) var codexProjects: [CodexProjectOption]
+    @Published private(set) var isLoadingCodexProjects = false
     @Published var statusMessage: String?
     @Published var shortcut: GlobalShortcut
     @Published private(set) var codexWorkspacePath: String
@@ -51,7 +53,12 @@ final class AppModel: ObservableObject {
         self.deliveryCoordinator = deliveryCoordinator
         self.hotKeyManager = hotKeyManager
         self.shortcut = hotKeyManager.savedShortcut()
-        self.codexWorkspacePath = Self.savedCodexWorkspacePath()
+        let savedWorkspacePath = Self.savedCodexWorkspacePath()
+        self.codexWorkspacePath = savedWorkspacePath
+        self.codexProjects = CodexProjectCatalog.options(
+            defaultPath: savedWorkspacePath,
+            discoveredPaths: []
+        )
     }
 
     func load() async {
@@ -245,7 +252,11 @@ final class AppModel: ObservableObject {
         updatingTaskFieldKeys.contains(taskFieldKey(item.id, field))
     }
 
-    func askCodex(_ item: NotionListItem, instruction: String) async -> Bool {
+    func askCodex(
+        _ item: NotionListItem,
+        instruction: String,
+        workspacePath: String
+    ) async -> Bool {
         guard item.type == .task,
               askingCodexTaskIDs.insert(item.id).inserted
         else {
@@ -258,7 +269,7 @@ final class AppModel: ObservableObject {
             _ = try await codexTaskCoordinator.start(
                 item: item,
                 instruction: instruction,
-                workspacePath: codexWorkspacePath
+                workspacePath: workspacePath
             )
             statusMessage = "Codex is working on \(item.taskID). It will open when ready."
             return true
@@ -272,6 +283,22 @@ final class AppModel: ObservableObject {
     func codexThreadID(for item: NotionListItem) -> String? {
         guard item.type == .task else { return nil }
         return codexTaskCoordinator.savedThreadID(for: item.id)
+    }
+
+    func loadCodexProjects() async {
+        guard !isLoadingCodexProjects else { return }
+        isLoadingCodexProjects = true
+        codexProjects = await codexTaskCoordinator.availableProjects(
+            defaultPath: codexWorkspacePath
+        )
+        isLoadingCodexProjects = false
+    }
+
+    func includeCodexProject(path: String) {
+        codexProjects = CodexProjectCatalog.options(
+            defaultPath: codexWorkspacePath,
+            discoveredPaths: codexProjects.map(\.path) + [path]
+        )
     }
 
     @discardableResult
@@ -291,6 +318,10 @@ final class AppModel: ObservableObject {
         }
         codexWorkspacePath = url.path
         UserDefaults.standard.set(url.path, forKey: "clasp.codexWorkspacePath")
+        codexProjects = CodexProjectCatalog.options(
+            defaultPath: url.path,
+            discoveredPaths: codexProjects.map(\.path)
+        )
         statusMessage = "Codex workspace updated."
         return true
     }

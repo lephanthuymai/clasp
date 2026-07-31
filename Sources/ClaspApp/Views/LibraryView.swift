@@ -574,7 +574,14 @@ private struct AskCodexView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var instruction = ""
+    @State private var selectedWorkspacePath: String
     @FocusState private var instructionFocused: Bool
+
+    init(model: AppModel, item: NotionListItem) {
+        self.model = model
+        self.item = item
+        _selectedWorkspacePath = State(initialValue: model.codexWorkspacePath)
+    }
 
     private var isStarting: Bool {
         model.askingCodexTaskIDs.contains(item.id)
@@ -598,7 +605,7 @@ private struct AskCodexView: View {
 
     private var workspaceName: String {
         URL(
-            fileURLWithPath: model.codexWorkspacePath,
+            fileURLWithPath: selectedWorkspacePath,
             isDirectory: true
         ).lastPathComponent
     }
@@ -624,6 +631,9 @@ private struct AskCodexView: View {
         .frame(width: 580)
         .onAppear {
             instructionFocused = true
+        }
+        .task {
+            await model.loadCodexProjects()
         }
     }
 
@@ -742,21 +752,70 @@ private struct AskCodexView: View {
     }
 
     private var workspaceDisclosure: some View {
-        HStack(spacing: 9) {
-            Image(systemName: "folder")
-                .foregroundStyle(.tint)
-            VStack(alignment: .leading, spacing: 1) {
-                Text("Runs in \(workspaceName)")
-                    .font(.callout.weight(.medium))
-                Text(model.codexWorkspacePath)
-                    .font(.caption.monospaced())
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
+        VStack(alignment: .leading, spacing: 9) {
+            HStack {
+                Label("Codex project", systemImage: "folder")
+                    .font(.headline)
+                Spacer()
+                if model.isLoadingCodexProjects {
+                    ProgressView()
+                        .controlSize(.small)
+                        .accessibilityLabel("Loading Codex projects")
+                }
             }
-            Spacer()
+
+            HStack(spacing: 10) {
+                Picker("Codex project", selection: $selectedWorkspacePath) {
+                    ForEach(model.codexProjects) { project in
+                        Text(project.name)
+                            .tag(project.path)
+                    }
+                    if !model.codexProjects.contains(where: {
+                        $0.path == selectedWorkspacePath
+                    }) {
+                        Text(workspaceName)
+                            .tag(selectedWorkspacePath)
+                    }
+                }
+                .labelsHidden()
+                .frame(maxWidth: .infinity)
+
+                Button {
+                    chooseWorkspaceFolder()
+                } label: {
+                    Label("Choose Folder…", systemImage: "folder.badge.plus")
+                }
+            }
+
+            Text(selectedWorkspacePath)
+                .font(.caption.monospaced())
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .truncationMode(.middle)
+
+            Text("Projects are discovered from existing Codex conversations. Choose any other folder when it has not appeared in Codex yet.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, 2)
+        .padding(14)
+        .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func chooseWorkspaceFolder() {
+        let panel = NSOpenPanel()
+        panel.title = "Choose Codex Project"
+        panel.prompt = "Choose Project"
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.directoryURL = URL(
+            fileURLWithPath: selectedWorkspacePath,
+            isDirectory: true
+        )
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        selectedWorkspacePath = url.standardizedFileURL.path
+        model.includeCodexProject(path: selectedWorkspacePath)
     }
 
     private var actionFooter: some View {
@@ -780,7 +839,11 @@ private struct AskCodexView: View {
 
             Button {
                 Task {
-                    if await model.askCodex(item, instruction: instruction) {
+                    if await model.askCodex(
+                        item,
+                        instruction: instruction,
+                        workspacePath: selectedWorkspacePath
+                    ) {
                         dismiss()
                     }
                 }

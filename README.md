@@ -13,8 +13,8 @@ requirements, architecture decisions, contracts, and implementation tasks live i
 - Opens a compact native review panel from a configurable global shortcut.
 - Creates Tasks or Bookmarks with optional URL, due date, and tags.
 - Creates and validates dedicated `Clasp Tasks` and `Clasp Bookmarks` databases.
-- Hands a Task to a persistent Codex conversation with an optional instruction and mirrors
-  Codex lifecycle progress back to Notion.
+- Hands a Task to a persistent Codex conversation with an optional instruction and a dynamically
+  discovered local project folder, then mirrors Codex lifecycle progress back to Notion.
 - Opens a main window with separate Tasks and Bookmarks tabs loaded from Notion.
 - Creates new Tasks and Bookmarks manually without requiring a source-app selection.
 - Stores the Notion integration token only in macOS Keychain.

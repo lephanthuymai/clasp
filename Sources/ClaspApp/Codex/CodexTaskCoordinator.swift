@@ -33,6 +33,15 @@ final class CodexTaskCoordinator {
         let thread: Thread
     }
 
+    private struct ThreadListResult: Decodable {
+        struct ThreadSummary: Decodable {
+            let cwd: String?
+        }
+
+        let data: [ThreadSummary]
+        let nextCursor: String?
+    }
+
     private final class Session: @unchecked Sendable {
         let pageID: String
         let process: Process
@@ -42,12 +51,20 @@ final class CodexTaskCoordinator {
         var nextRequestID = 1
         var pending: [Int: CheckedContinuation<Data, Error>] = [:]
         var reachedTerminalState = false
+        let reportsProgress: Bool
 
-        init(pageID: String, process: Process, input: FileHandle, output: FileHandle) {
+        init(
+            pageID: String,
+            process: Process,
+            input: FileHandle,
+            output: FileHandle,
+            reportsProgress: Bool = true
+        ) {
             self.pageID = pageID
             self.process = process
             self.input = input
             self.output = output
+            self.reportsProgress = reportsProgress
         }
     }
 
@@ -69,9 +86,6 @@ final class CodexTaskCoordinator {
         instruction: String,
         workspacePath: String
     ) async throws -> String {
-        guard let executableURL = executableURL() else {
-            throw CodexTaskError.appNotInstalled
-        }
         let workspaceURL = URL(fileURLWithPath: workspacePath, isDirectory: true)
             .standardizedFileURL
         var isDirectory: ObjCBool = false
@@ -82,43 +96,9 @@ final class CodexTaskCoordinator {
             throw CodexTaskError.workspaceUnavailable(workspaceURL.path)
         }
 
-        let process = Process()
-        let inputPipe = Pipe()
-        let outputPipe = Pipe()
-        let errorPipe = Pipe()
-        process.executableURL = executableURL
-        process.arguments = ["app-server", "--stdio"]
-        process.standardInput = inputPipe
-        process.standardOutput = outputPipe
-        process.standardError = errorPipe
-
-        let session = Session(
-            pageID: item.id,
-            process: process,
-            input: inputPipe.fileHandleForWriting,
-            output: outputPipe.fileHandleForReading
-        )
+        let session = try openSession(pageID: item.id)
         let sessionKey = ObjectIdentifier(session)
         startingSessions[sessionKey] = session
-
-        outputPipe.fileHandleForReading.readabilityHandler = { [weak self, weak session] handle in
-            let data = handle.availableData
-            Task { @MainActor in
-                guard let self, let session else { return }
-                if data.isEmpty {
-                    self.finishUnexpectedly(session)
-                } else {
-                    self.receive(data, from: session)
-                }
-            }
-        }
-
-        do {
-            try process.run()
-        } catch {
-            startingSessions.removeValue(forKey: sessionKey)
-            throw CodexTaskError.couldNotStart
-        }
 
         do {
             _ = try await request(
@@ -185,6 +165,14 @@ final class CodexTaskCoordinator {
         }
     }
 
+    func availableProjects(defaultPath: String) async -> [CodexProjectOption] {
+        let discoveredPaths = (try? await discoverThreadProjectPaths()) ?? []
+        return CodexProjectCatalog.options(
+            defaultPath: defaultPath,
+            discoveredPaths: discoveredPaths
+        )
+    }
+
     func savedThreadID(for pageID: String) -> String? {
         threadAssociations()[pageID]
     }
@@ -216,6 +204,91 @@ final class CodexTaskCoordinator {
                 session.pending.removeValue(forKey: requestID)
                 continuation.resume(throwing: error)
             }
+        }
+    }
+
+    private func discoverThreadProjectPaths() async throws -> [String] {
+        let session = try openSession(pageID: "project-discovery", reportsProgress: false)
+        defer {
+            session.reachedTerminalState = true
+            session.output.readabilityHandler = nil
+            try? session.input.close()
+            if session.process.isRunning {
+                session.process.terminate()
+            }
+        }
+
+        _ = try await request(
+            "initialize",
+            params: [
+                "clientInfo": [
+                    "name": "clasp",
+                    "title": "Clasp",
+                    "version": "0.1"
+                ],
+                "capabilities": ["experimentalApi": true]
+            ],
+            session: session
+        )
+        try notify("initialized", params: nil, session: session)
+
+        var paths: [String] = []
+        var cursor: String?
+        repeat {
+            var params: [String: Any] = [
+                "limit": 100,
+                "archived": false
+            ]
+            if let cursor { params["cursor"] = cursor }
+            let data = try await request("thread/list", params: params, session: session)
+            let page = try JSONDecoder().decode(ThreadListResult.self, from: data)
+            paths.append(contentsOf: page.data.compactMap(\.cwd))
+            cursor = page.nextCursor
+        } while cursor != nil
+        return paths
+    }
+
+    private func openSession(
+        pageID: String,
+        reportsProgress: Bool = true
+    ) throws -> Session {
+        guard let executableURL = executableURL() else {
+            throw CodexTaskError.appNotInstalled
+        }
+        let process = Process()
+        let inputPipe = Pipe()
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+        process.executableURL = executableURL
+        process.arguments = ["app-server", "--stdio"]
+        process.standardInput = inputPipe
+        process.standardOutput = outputPipe
+        process.standardError = errorPipe
+
+        let session = Session(
+            pageID: pageID,
+            process: process,
+            input: inputPipe.fileHandleForWriting,
+            output: outputPipe.fileHandleForReading,
+            reportsProgress: reportsProgress
+        )
+        outputPipe.fileHandleForReading.readabilityHandler = { [weak self, weak session] handle in
+            let data = handle.availableData
+            Task { @MainActor in
+                guard let self, let session else { return }
+                if data.isEmpty {
+                    self.finishUnexpectedly(session)
+                } else {
+                    self.receive(data, from: session)
+                }
+            }
+        }
+        do {
+            try process.run()
+            return session
+        } catch {
+            session.output.readabilityHandler = nil
+            throw CodexTaskError.couldNotStart
         }
     }
 
@@ -323,7 +396,7 @@ final class CodexTaskCoordinator {
             continuation.resume(throwing: CodexTaskError.couldNotStart)
         }
         session.pending.removeAll()
-        if !session.reachedTerminalState {
+        if !session.reachedTerminalState, session.reportsProgress {
             emit(.failed, for: session)
         }
         stop(session)

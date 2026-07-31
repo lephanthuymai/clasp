@@ -442,3 +442,13 @@ Environment-limited release checks:
 - [x] T110 Remove duplicate app-delegate, window-coordinator, and SwiftUI lifecycle loads,
   coalesce in-flight library refreshes, and isolate explicit Settings credential checks
 - [x] T111 Rebuild, test, package, and verify denied and allowed Keychain recovery paths
+
+## Phase 30: Per-task Codex project selection
+
+- [x] T112 Add a deterministic Codex project catalog that validates, deduplicates, and keeps the
+  configured default first per FR-056, with regression coverage
+- [x] T113 Discover project folders dynamically through app-server `thread/list` pagination and
+  preserve `thread/start.cwd` routing
+- [x] T114 Add a per-task project picker and fallback folder chooser to Ask Codex, defaulting to
+  the configured `truetest-pm-agenthub` project
+- [ ] T115 Rebuild, package, and visually verify dynamic and manually chosen project paths
