@@ -45,6 +45,21 @@ The Source remains editable when an application cannot expose its exact location
 - Delete a Task from Clasp with confirmation when it should be moved to Notion Trash.
 - Preserve confirmed captures locally before delivery and retain failed deliveries for retry.
 
+#### Start a Codex session in seconds
+
+Every Task has an **Ask Codex** action. Click it to open a focused handoff dialog, add an optional
+instruction, choose the local Codex project where the work belongs, and select **Start in Codex**.
+Clasp sends the Task name, Notes, Priority, Due Date, Source, and a direct link to its Notion page
+as the conversation context.
+
+![Starting a Codex session from a Clasp Task](docs/images/features/ask-codex.jpg)
+
+Clasp immediately creates a persistent Codex conversation named with the Task's stable
+`CLASP-XXXXXXXX` ID and replaces **Ask Codex** with **Open Conversation**. The Task remains linked
+to its Codex conversation, while Clasp synchronizes Working, Waiting, Completed, or Failed
+Progress back to Notion. Completing the Codex work does not check the separate Done checkbox
+unless you explicitly request it.
+
 ### Bookmark Management
 
 ![Bookmark management in Clasp](docs/images/features/bookmark-management.jpg)
