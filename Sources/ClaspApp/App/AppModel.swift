@@ -346,7 +346,15 @@ final class AppModel: ObservableObject {
     func openAgentConversation(_ conversation: AgentConversation) {
         switch conversation {
         case let .claudeCode(reference):
-            if !ClaudeCodeConversationOpener.open(reference) {
+            if claudeTaskCoordinator.takeOverSession(reference) {
+                statusMessage = "Handing the session over to you."
+                Task {
+                    try? await Task.sleep(for: .milliseconds(400))
+                    if !ClaudeCodeConversationOpener.open(reference) {
+                        statusMessage = "Install the Claude Code CLI to open this conversation."
+                    }
+                }
+            } else if !ClaudeCodeConversationOpener.open(reference) {
                 statusMessage = "Install the Claude Code CLI to open this conversation."
             }
         case let .codex(threadID):

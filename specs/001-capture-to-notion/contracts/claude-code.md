@@ -47,6 +47,12 @@ releases the worker, allows a short persistence grace period, and opens the conv
 once. This guarantees the user has immediate access to the conversation while preserving the
 automatic handoff once agent output is available.
 
+Unlike Codex's desktop deep link, a Terminal resume cannot attach to a run in progress: it would
+race the headless worker on the same stored session. Opening the conversation while the worker
+is still active therefore takes the session over — Clasp stops the worker, reports Waiting,
+suppresses the automatic open, waits briefly for the transcript to settle, and then resumes the
+conversation interactively from wherever the run had reached.
+
 ## Progress lifecycle
 
 Clasp is the writer of lifecycle state to Notion:

@@ -161,6 +161,23 @@ final class ClaudeCodeTaskCoordinator {
         return sessionsByID[reference.sessionID] != nil
     }
 
+    /// Hands an active session over to the user: stops the headless worker so
+    /// the interactive resume does not race it, reports Waiting, and skips
+    /// the automatic open. Returns false when no worker is running.
+    func takeOverSession(_ reference: ClaudeCodeSessionReference) -> Bool {
+        guard let session = sessionsByID[reference.sessionID] else {
+            return false
+        }
+        session.reachedTerminalState = true
+        session.output.readabilityHandler = nil
+        sessionsByID.removeValue(forKey: reference.sessionID)
+        if session.process.isRunning {
+            session.process.terminate()
+        }
+        emit(.waiting, for: session)
+        return true
+    }
+
     func savedSession(for pageID: String) -> ClaudeCodeSessionReference? {
         guard let entry = associations()[pageID],
               let sessionID = entry["sessionID"],
